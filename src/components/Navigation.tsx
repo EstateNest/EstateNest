@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail } from "lucide-react";
+import { Menu, X, Phone, Mail, Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logo from "../assets/icon-02.png";
+
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,15 +39,20 @@ const Navigation = () => {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform">
-              <span className="text-primary-foreground font-bold text-xl">EN</span>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Estate Nest
-            </span>
-          </Link>
+         {/* Logo */}
+<Link to="/" className="flex items-center space-x-2 group">
+  <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform">
+    <img
+      src={logo}
+      alt="Estate Nest Logo"
+      className="w-10 h-10 object-contain"
+    />
+  </div>
+  <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+    Estate Nest
+  </span>
+</Link>
+
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
@@ -68,13 +75,10 @@ const Navigation = () => {
 
           {/* Contact Info & CTA */}
           <div className="hidden lg:flex items-center space-x-4">
-            <a
-              href="tel:780-860-3191"
-              className="flex items-center space-x-2 text-sm text-foreground/70 hover:text-primary transition-colors"
-            >
-              <Phone className="w-4 h-4" />
-              <span>780-860-3191</span>
-            </a>
+        <div className="hidden lg:flex items-center space-x-2 text-sm text-foreground/70 cursor-default select-none">
+  <Phone className="w-4 h-4" />
+  <span>780-860-3191</span>
+</div>
             <Link to="/quote">
               <Button className="bg-gradient-accent hover:shadow-glow transition-all">
                 Get Free Quote

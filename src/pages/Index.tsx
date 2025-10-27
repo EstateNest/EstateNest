@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import heroImage from "@/assets/hero-family.jpg";
+import mainImage from "@/assets/5.jpeg";
 import iconLife from "@/assets/icon-life.png";
 import iconCritical from "@/assets/icon-critical.png";
 import iconDisability from "@/assets/icon-disability.png";
@@ -129,11 +130,13 @@ const Index = () => {
 
             <div className="relative animate-fade-in">
               <div className="absolute inset-0 bg-gradient-primary rounded-3xl blur-3xl opacity-20 animate-pulse" />
-              <img
-                src={heroImage}
-                alt="Happy family protected by Estate Nest insurance"
-                className="relative rounded-3xl shadow-elegant w-full object-cover"
-              />
+            <img
+  src={mainImage}
+  alt="Happy family protected by Estate Nest insurance"
+  className="relative rounded-3xl shadow-elegant w-full object-cover h-65" // h-64 is 16rem height
+/>
+
+
             </div>
           </div>
         </div>
@@ -217,7 +220,7 @@ const Index = () => {
                 </Button>
               </Link>
               <Link to="/calculators">
-                <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10 px-8">
+                <Button size="lg" variant="outline" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
                   Try Our Calculators
                 </Button>
               </Link>
