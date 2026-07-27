@@ -194,6 +194,11 @@ const Services = () => {
                   Get Free Consultation
                 </Button>
               </Link>
+              <Link to="/faq">
+                <Button size="lg" variant="outline" className="px-8">
+                  View FAQ
+                </Button>
+              </Link>
               <a href="tel:780-860-3191">
                 <Button size="lg" variant="outline" className="px-8">
                   Call 780-860-3191

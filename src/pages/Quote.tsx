@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,6 +127,21 @@ const Quote = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Conversion tracking - fire after successful submission
+        // Note: Does NOT send any PII to analytics
+        if (typeof window !== 'undefined') {
+          // Google Analytics 4
+          if ((window as any).gtag) {
+            (window as any).gtag('event', 'quote_request_submitted', {
+              event_category: 'lead_generation',
+              event_label: 'quote_form',
+              insurance_type: formData.insuranceType
+            });
+          }
+          // Console log for debugging (remove in production if not needed)
+          console.log('[Analytics] Quote request submitted successfully');
+        }
+
         toast({
           title: "Quote Request Submitted!",
           description: "We'll contact you within 24 hours to discuss your coverage options.",
@@ -455,6 +471,11 @@ const Quote = () => {
                   Email Us
                 </Button>
               </a>
+              <Link to="/faq">
+                <Button variant="outline" size="lg">
+                  View FAQ
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

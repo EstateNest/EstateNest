@@ -74,8 +74,9 @@ const Contact = () => {
                   </div>
                   <h3 className="text-xl font-bold mb-3 text-foreground">Visit Us</h3>
                   <p className="text-muted-foreground">
+                    5619 Kootook Place SW<br />
                     Edmonton, Alberta<br />
-                    Canada
+                    T6W 4Z5, Canada
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
                     By appointment only

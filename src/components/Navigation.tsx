@@ -23,8 +23,8 @@ const Navigation = () => {
     { name: "Home", path: "/" },
     { name: "Services", path: "/services" },
     { name: "Service Areas", path: "/service-areas" },
+    { name: "FAQ", path: "/faq" },
     { name: "About", path: "/about" },
-    { name: "Calculators", path: "/calculators" },
     { name: "Contact", path: "/contact" },
   ];
 
