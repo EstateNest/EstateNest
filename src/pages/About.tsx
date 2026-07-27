@@ -31,10 +31,10 @@ const About = () => {
   ];
 
   const stats = [
+    { label: "Google Rating", value: "5.0 ★", icon: Award },
     { label: "Families Protected", value: "500+", icon: Users },
     { label: "Coverage Placed", value: "$50M+", icon: TrendingUp },
-    { label: "Years Experience", value: "15+", icon: Award },
-    { label: "Client Satisfaction", value: "98%", icon: Heart },
+    { label: "Client Reviews", value: "47", icon: Heart },
   ];
 
   const whyChooseUs = [
@@ -214,9 +214,9 @@ const About = () => {
                   <MapPin className="w-10 h-10 text-primary mx-auto mb-4" />
                   <h3 className="font-bold text-foreground mb-2">Our Office</h3>
                   <p className="text-muted-foreground text-sm">
-                    5619 Kootook Place SW<br />
+                    7739 8 Ave SW<br />
                     Edmonton, Alberta<br />
-                    T6W 4Z5, Canada
+                    T6X 0A3, Canada
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
                     By appointment only

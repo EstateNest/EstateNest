@@ -90,7 +90,7 @@ const Footer = () => {
               </a>
               <div className="flex items-start space-x-3 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4 mt-0.5" />
-                <span>Edmonton, Alberta, Canada</span>
+                <span>7739 8 Ave SW, Edmonton, Alberta T6X 0A3</span>
               </div>
             </div>
 

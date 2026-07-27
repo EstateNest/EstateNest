@@ -18,7 +18,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 import { toast } from "@/hooks/use-toast";
-import { Shield, CheckCircle } from "lucide-react";
+import { Shield, CheckCircle, Award } from "lucide-react";
 
 const Quote = () => {
   const navigate = useNavigate();
@@ -203,7 +203,7 @@ const Quote = () => {
           </div>
 
           {/* Trust Indicators */}
-          <div className="grid md:grid-cols-3 gap-4 mb-12 animate-fade-in">
+          <div className="grid md:grid-cols-4 gap-4 mb-12 animate-fade-in">
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
               <Shield className="w-8 h-8 text-primary" />
               <div>
@@ -223,6 +223,13 @@ const Quote = () => {
               <div>
                 <div className="font-semibold text-sm">$50M+</div>
                 <div className="text-xs text-muted-foreground">Coverage Placed</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
+              <Award className="w-8 h-8 text-primary" />
+              <div>
+                <div className="font-semibold text-sm">5.0 ★ Google</div>
+                <div className="text-xs text-muted-foreground">47 Reviews</div>
               </div>
             </div>
           </div>
