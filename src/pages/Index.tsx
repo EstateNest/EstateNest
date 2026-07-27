@@ -17,7 +17,6 @@ import {
   Phone,
   ArrowRight,
 } from "lucide-react";
-import heroImage from "@/assets/hero-family.jpg";
 import mainImage from "@/assets/5.jpeg";
 import iconLife from "@/assets/icon-life.png";
 import iconCritical from "@/assets/icon-critical.png";
