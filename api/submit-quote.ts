@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createTransport } from 'nodemailer';
 
 interface QuoteFormData {
   firstName: string;
@@ -23,7 +24,6 @@ interface ValidationError {
 function validateFormData(data: QuoteFormData): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // Required fields
   if (!data.firstName?.trim()) {
     errors.push({ field: 'firstName', message: 'First name is required' });
   }
@@ -40,13 +40,11 @@ function validateFormData(data: QuoteFormData): ValidationError[] {
     errors.push({ field: 'insuranceType', message: 'Insurance type is required' });
   }
 
-  // Email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (data.email && !emailRegex.test(data.email)) {
     errors.push({ field: 'email', message: 'Please enter a valid email address' });
   }
 
-  // Phone format validation (10+ digits)
   const cleanPhone = data.phone?.replace(/\D/g, '') || '';
   if (cleanPhone.length < 10) {
     errors.push({ field: 'phone', message: 'Please enter a valid 10-digit phone number' });
@@ -55,48 +53,8 @@ function validateFormData(data: QuoteFormData): ValidationError[] {
   return errors;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({
-      success: false,
-      message: 'Method not allowed. Please use POST to submit the form.'
-    });
-  }
-
-  try {
-    const data = req.body as QuoteFormData;
-    
-    // Validate input
-    const validationErrors = validateFormData(data);
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        errors: validationErrors,
-        message: 'Please correct the form errors'
-      });
-    }
-
-    // Check for required API key
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-      console.error('RESEND_API_KEY environment variable is not set');
-      return res.status(503).json({
-        success: false,
-        message: 'Email service is not configured. Please contact us directly.'
-      });
-    }
-
-    // Format the email content
-    const timestamp = new Date().toLocaleString('en-CA', { 
-      timeZone: 'America/Edmonton',
-      dateStyle: 'full',
-      timeStyle: 'long'
-    });
-
-    const cleanPhone = data.phone.replace(/\D/g, '');
-
-    const emailHtml = `
+function generateEmailHtml(data: QuoteFormData, timestamp: string, cleanPhone: string): string {
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -181,14 +139,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 </body>
 </html>
 `;
+}
 
-    // Prepare recipients
-    const recipients = [
-      'hello@estatenest.ca',
-      'kanwar@estatenest.ca'
-    ];
+async function sendViaGmail(
+  data: QuoteFormData, 
+  emailHtml: string, 
+  timestamp: string
+): Promise<{ success: boolean; error?: string }> {
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+  
+  if (!gmailUser || !gmailAppPassword) {
+    return { success: false, error: 'Gmail credentials not configured' };
+  }
 
-    // Send email via Resend
+  const transporter = createTransport({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailAppPassword,
+    },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: `"Estate Nest" <${gmailUser}>`,
+      to: ['hello@estatenest.ca', 'kanwar@estatenest.ca'],
+      subject: `🏠 New Quote Request from ${data.firstName} ${data.lastName} - ${data.insuranceType}`,
+      html: emailHtml,
+      replyTo: data.email,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Gmail send error:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+async function sendViaResend(
+  data: QuoteFormData, 
+  emailHtml: string
+): Promise<{ success: boolean; error?: string }> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  if (!resendApiKey) {
+    return { success: false, error: 'Resend API key not configured' };
+  }
+
+  try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -197,7 +195,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         from: 'Estate Nest <onboarding@resend.dev>',
-        to: recipients,
+        to: ['hello@estatenest.ca', 'kanwar@estatenest.ca'],
         subject: `🏠 New Quote Request from ${data.firstName} ${data.lastName} - ${data.insuranceType}`,
         html: emailHtml,
         reply_to: data.email,
@@ -206,20 +204,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Resend API error:', errorData);
-      return res.status(500).json({
+      return { success: false, error: JSON.stringify(errorData) };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({
+      success: false,
+      message: 'Method not allowed. Please use POST to submit the form.'
+    });
+  }
+
+  try {
+    const data = req.body as QuoteFormData;
+    
+    const validationErrors = validateFormData(data);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
         success: false,
-        message: 'Failed to send email. Please try again or contact us directly.'
+        errors: validationErrors,
+        message: 'Please correct the form errors'
       });
     }
 
-    const result = await response.json();
-    console.log('Email sent successfully:', result.id);
+    const timestamp = new Date().toLocaleString('en-CA', { 
+      timeZone: 'America/Edmonton',
+      dateStyle: 'full',
+      timeStyle: 'long'
+    });
+    const cleanPhone = data.phone.replace(/\D/g, '');
+    const emailHtml = generateEmailHtml(data, timestamp, cleanPhone);
 
+    // Try Gmail first, then fall back to Resend
+    let emailResult = await sendViaGmail(data, emailHtml, timestamp);
+    
+    if (!emailResult.success) {
+      console.log('Gmail failed, trying Resend...');
+      emailResult = await sendViaResend(data, emailHtml);
+    }
+
+    if (!emailResult.success) {
+      console.error('All email providers failed:', emailResult.error);
+      return res.status(503).json({
+        success: false,
+        message: 'Email service is not configured. Please contact us directly at hello@estatenest.ca or 780-860-3191.'
+      });
+    }
+
+    console.log('Email sent successfully');
     return res.status(200).json({
       success: true,
-      message: 'Your quote request has been submitted successfully. We will contact you within 24 hours.',
-      emailId: result.id
+      message: 'Your quote request has been submitted successfully. We will contact you within 24 hours.'
     });
 
   } catch (error) {
