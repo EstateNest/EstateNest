@@ -5,6 +5,41 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "estatenest.ca"
+        }
+      ],
+      "destination": "https://www.estatenest.ca/:1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.estatenest.ca"
+        }
+      ],
+      "destination": "https://www.estatenest.ca/:1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "http://estatenest.ca"
+        }
+      ],
+      "destination": "https://www.estatenest.ca/:1",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -18,7 +53,7 @@
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://estatenest.ca" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://www.estatenest.ca" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
       ]
