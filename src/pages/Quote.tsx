@@ -214,8 +214,8 @@ const Quote = () => {
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
               <CheckCircle className="w-8 h-8 text-primary" />
               <div>
-                <div className="font-semibold text-sm">500+ Families</div>
-                <div className="text-xs text-muted-foreground">Protected</div>
+                <div className="font-semibold text-sm">Families</div>
+                <div className="text-xs text-muted-foreground">Protected in AB & ON</div>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
@@ -435,9 +435,9 @@ const Quote = () => {
                     </Label>
                   </div>
 
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      <strong>E&O Insurance Disclaimer:</strong> Estate Nest Inc. is fully licensed and insured with Errors & Omissions coverage. Your information is handled with the highest level of professional care and confidentiality.
+                  <div className="p-4 bg-muted rounded-lg border border-primary/20">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      <strong>Disclaimer:</strong> By clicking "Get My Quote", you explicitly initiate this request of your own free will and confirm you are under no obligation. We protect your details and will share with insurance companies only if you choose to proceed after speaking with our licensed advisor. Estate Nest Inc. is fully licensed in AB & ON and carries professional E&O insurance. By submitting, you agree to our Privacy and Cookie Policies, and the standard limitations on cyber transmission risk outlined in our full Terms & Conditions.
                     </p>
                   </div>
                 </div>
@@ -457,7 +457,7 @@ const Quote = () => {
                       Submitting...
                     </>
                   ) : (
-                    'Submit Quote Request'
+                    'Get My Quote'
                   )}
                 </Button>
               </form>

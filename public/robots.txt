@@ -1,11 +1,11 @@
 # EstateNest.ca robots.txt
-# https://estatenest.ca/robots.txt
+# https://www.estatenest.ca/robots.txt
 
 User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://estatenest.ca/sitemap.xml
+Sitemap: https://www.estatenest.ca/sitemap.xml
 
 # Block API endpoints from indexing
 Disallow: /api/
