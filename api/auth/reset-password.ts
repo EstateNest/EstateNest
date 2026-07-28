@@ -41,11 +41,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Hash the new password
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    // Update the user's password
+    // Update the user's password (case-insensitive)
     const { data, error } = await supabase
       .from('users')
       .update({ password_hash: passwordHash })
-      .eq('username', username.toLowerCase())
+      .ilike('username', username)
       .select();
 
     if (error) {
