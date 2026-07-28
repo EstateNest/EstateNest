@@ -150,7 +150,25 @@ const Footer = () => {
           </div>
           <div className="mt-4 text-center">
             <p className="text-xs text-muted-foreground">
-              Estate Nest Inc. is licensed and insured in Alberta and Ontario. E&O Insurance Coverage in effect.
+              Estate Nest Inc is licensed by the{" "}
+              <a 
+                href="https://www.fsrao.ca/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Financial Services Regulatory Authority of Ontario (FSRA)
+              </a>{" "}
+              and the{" "}
+              <a 
+                href="https://www.abcouncil.ab.ca/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Alberta Insurance Council (AIC)
+              </a>
+              . E&O Insured.
             </p>
           </div>
         </div>

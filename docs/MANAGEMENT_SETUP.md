@@ -1,0 +1,140 @@
+# EstateNest Lead Management System - Setup Guide
+
+## Overview
+
+This document covers the setup and configuration of the EstateNest Lead Management System, built as an extension to the existing EstateNest.ca website.
+
+## Architecture
+
+```
+EstateNest.ca (Public) ──► API Server (Port 3001) ──► Supabase (PostgreSQL)
+     React SPA                    Hono + Node              Database
+```
+
+## Prerequisites
+
+1. Node.js 18+ installed
+2. Supabase account (free tier works)
+3. Git access to the EstateNest repository
+
+---
+
+## Phase 1: Supabase Setup
+
+### 1.1 Create Supabase Project
+
+1. Go to supabase.com and sign up/login
+2. Click "New Project"
+3. Enter details:
+   - **Name**: EstateNest CRM
+   - **Database Password**: Generate a strong password
+   - **Region**: Choose closest to your users
+
+### 1.2 Get Your Project Credentials
+
+1. Go to Project Settings → API
+2. Copy the following values:
+   - **Project URL**: `https://xxxxx.supabase.co`
+   - **anon/public key**: (safe for client-side)
+   - **service_role key**: (KEEP SECRET - server-side only)
+
+### 1.3 Run Database Schema
+
+1. Go to SQL Editor in Supabase Dashboard
+2. Copy the contents of `supabase/schema.sql`
+3. Paste and click "Run"
+4. Verify tables created
+
+---
+
+## Phase 2: Local Development Setup
+
+### 2.1 Clone & Checkout Branch
+
+```bash
+git checkout feature/estate-nest-backend-test
+```
+
+### 2.2 Install Dependencies
+
+```bash
+npm install
+```
+
+### 2.3 Create Environment File
+
+```bash
+cp management.env.example .env.local
+```
+
+### 2.4 Configure .env.local
+
+Edit `.env.local` with your actual values:
+
+```env
+# Supabase (REQUIRED)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_ANON_KEY=your-anon-key
+
+# Authentication
+AUTH_SECRET=generate-with-openssl-rand-base64-32
+
+# Initial Admin User
+INITIAL_ADMIN_USERNAME=EstateNest2026
+INITIAL_ADMIN_EMAIL=admin@estatenest.ca
+INITIAL_ADMIN_PASSWORD=TestEN
+
+# Email (for lead notifications)
+RESEND_API_KEY=re_your_resend_api_key
+```
+
+### 2.5 Generate AUTH_SECRET
+
+```bash
+openssl rand -base64 32
+```
+
+---
+
+## Phase 3: Running Development
+
+### Start the API Server
+
+```bash
+npm run dev:api
+```
+
+### Start the Frontend (separate terminal)
+
+```bash
+npm run dev
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+- POST `/api/auth/login` - Login
+- POST `/api/auth/logout` - Logout
+- GET `/api/auth/me` - Get current user
+
+### Leads
+- POST `/api/leads` - Create lead
+- GET `/api/leads` - List leads
+- GET `/api/leads/stats` - Dashboard stats
+- PATCH `/api/leads/:id` - Update lead
+
+### Webhooks (Public)
+- POST `/api/webhooks/inbound-lead` - Public lead capture
+- POST `/api/webhooks/marblism` - Marblism integration
+
+---
+
+## Default Login
+
+- Username: `EstateNest2026`
+- Password: `TestEN`
+
+**⚠️ IMPORTANT: Change password immediately after first login!**
