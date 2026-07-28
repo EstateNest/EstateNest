@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (isEmail) {
       query = query.eq('email', username.toLowerCase());
     } else {
-      query = query.eq('username', username.toLowerCase());
+      query = query.ilike('username', username);
     }
 
     const { data: users, error: userError } = await query.limit(1);
