@@ -225,19 +225,19 @@ Properly structured buy-sell arrangements can help ensure smooth business transi
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/quote">
-              <Button className="bg-gradient-accent hover:shadow-glow text-white font-semibold px-6 py-3">
+              <Button className="bg-gradient-to-r from-primary via-secondary to-accent hover:shadow-lg text-white font-semibold px-6 py-3">
                 Get a Free Quote
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
-            <a href="tel:7808603191">
-              <Button variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-3">
+            <a href="tel:780-860-3191">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3">
                 <Phone className="mr-2 w-4 h-4" />
                 Call 780-860-3191
               </Button>
             </a>
             <a href="mailto:hello@estatenest.ca?subject=Insurance Inquiry from estatenest.ca">
-              <Button variant="default" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold px-6 py-3">
+              <Button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3">
                 <Mail className="mr-2 w-4 h-4" />
                 Email Us
               </Button>
