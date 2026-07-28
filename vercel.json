@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/(.*)", "dest": "/index.html", "check": true }
+    { "source": "/(.*)", "destination": "/index.html", "check": true }
   ],
   "headers": [
     {
