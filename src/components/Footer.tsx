@@ -26,7 +26,7 @@ const Footer = () => {
               <span className="font-semibold text-foreground">E&O Insured</span>
             </div>
             <div className="space-y-1 text-sm text-muted-foreground">
-              <p>✓ 500+ Families Protected</p>
+              <p>✓ Families Protected in AB & ON</p>
               <p>✓ $50M+ Coverage Placed</p>
             </div>
           </div>

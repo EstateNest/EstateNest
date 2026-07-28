@@ -26,13 +26,13 @@ const About = () => {
     {
       icon: Target,
       title: "Results-Driven",
-      description: "Over $50M in coverage placed, protecting 500+ families across Canada.",
+      description: "Over $50M in coverage placed, protecting families across Alberta and Ontario.",
     },
   ];
 
   const stats = [
     { label: "Google Rating", value: "5.0 ★", icon: Award },
-    { label: "Families Protected", value: "500+", icon: Users },
+    { label: "Families Protected", value: "Serving All", icon: Users },
     { label: "Coverage Placed", value: "$50M+", icon: TrendingUp },
     { label: "Client Reviews", value: "47", icon: Heart },
   ];
@@ -89,7 +89,7 @@ const About = () => {
                 With licenses in both Alberta and Ontario, we serve families across Canada with a wide range of insurance and financial products. Our team of experienced advisors takes the time to understand your unique situation, goals, and concerns before recommending solutions.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                We're proud to be E&O insured, demonstrating our commitment to professional standards and client protection. With over $50 million in coverage placed and 500+ families protected, we've established ourselves as a trusted partner in financial security.
+                We're proud to be E&O insured, demonstrating our commitment to professional standards and client protection. With over $50 million in coverage placed and families protected across Alberta and Ontario, we've established ourselves as a trusted partner in financial security.
               </p>
             </div>
 

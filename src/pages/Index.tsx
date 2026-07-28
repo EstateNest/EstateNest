@@ -65,9 +65,9 @@ const Index = () => {
 
   const trustIndicators = [
     { icon: Award, label: "E&O Insured", value: "Fully Licensed" },
-    { icon: Users, label: "Families Protected", value: "500+" },
+    { icon: Users, label: "Families Protected", value: "Serving Alberta & Ontario" },
     { icon: Shield, label: "Coverage Placed", value: "$50M+" },
-    { icon: CheckCircle, label: "Alberta & Ontario", value: "Licensed" },
+    { icon: CheckCircle, label: "Service Areas", value: "Licensed" },
   ];
 
   return (
@@ -83,7 +83,7 @@ const Index = () => {
             <div className="space-y-8 animate-fade-in-up">
               <div className="inline-flex items-center space-x-2 px-4 py-2 bg-primary/10 rounded-full">
                 <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-primary">Trusted by 500+ Canadian Families</span>
+                <span className="text-sm font-medium text-primary">Protecting Canadian Families Since Day One</span>
               </div>
               
               <h1 className="text-5xl md:text-6xl font-bold leading-tight">

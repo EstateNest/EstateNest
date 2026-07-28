@@ -214,8 +214,8 @@ const Quote = () => {
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
               <CheckCircle className="w-8 h-8 text-primary" />
               <div>
-                <div className="font-semibold text-sm">500+ Families</div>
-                <div className="text-xs text-muted-foreground">Protected</div>
+                <div className="font-semibold text-sm">Families</div>
+                <div className="text-xs text-muted-foreground">Protected in AB & ON</div>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
