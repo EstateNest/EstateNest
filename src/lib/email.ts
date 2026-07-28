@@ -1,5 +1,7 @@
 // Email Service for EstateNest Management System
-// Supports Resend and Gmail SMTP
+// Uses Gmail SMTP for lead notifications
+
+import nodemailer from 'nodemailer';
 
 interface EmailOptions {
   to: string[];
@@ -24,71 +26,42 @@ interface LeadNotificationData {
   timestamp: string;
 }
 
-/**
- * Send email using Resend API
- */
-async function sendWithResend(to: string[], subject: string, html: string, text?: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  
-  if (!apiKey) {
-    console.error('RESEND_API_KEY not configured');
-    throw new Error('Email service not configured');
-  }
+// Gmail SMTP Configuration
+const GMAIL_USER = process.env.GMAIL_USER || 'hello@estatenest.ca';
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || '';
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: `${process.env.EMAIL_FROM_NAME || 'Estate Nest'} <${process.env.EMAIL_FROM || 'noreply@estatenest.ca'}>`,
-      to,
-      subject,
-      html,
-      text,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error('Resend API error:', error);
-    throw new Error(`Failed to send email: ${error}`);
-  }
-
-  return response.json();
-}
+// Create reusable transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: GMAIL_USER,
+    pass: GMAIL_APP_PASSWORD,
+  },
+});
 
 /**
  * Send email using Gmail SMTP
  */
-async function sendWithGmail(to: string[], subject: string, html: string, text?: string) {
-  // Note: In browser/serverless environments, you'd typically use a library like nodemailer
-  // For Vercel serverless, you can use the Gmail API directly
-  // This is a placeholder - actual implementation would use nodemailer or Gmail API
-  
-  console.warn('Gmail SMTP not implemented - use Resend for production');
-  throw new Error('Gmail SMTP not configured');
-}
-
-/**
- * Send email
- */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    // Try Resend first, fallback to Gmail
-    if (process.env.RESEND_API_KEY) {
-      await sendWithResend(options.to, options.subject, options.html, options.text);
-    } else if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      await sendWithGmail(options.to, options.subject, options.html, options.text);
-    } else {
-      console.warn('No email service configured - email not sent');
+    if (!GMAIL_APP_PASSWORD) {
+      console.warn('GMAIL_APP_PASSWORD not configured - email not sent');
       console.log('Email would be sent to:', options.to);
       console.log('Subject:', options.subject);
       return false;
     }
-    
+
+    const mailOptions = {
+      from: `"Estate Nest CRM" <${GMAIL_USER}>`,
+      to: options.to.join(', '),
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully to:', options.to);
+    console.log('Message ID:', info.messageId);
     return true;
   } catch (error) {
     console.error('Failed to send email:', error);
