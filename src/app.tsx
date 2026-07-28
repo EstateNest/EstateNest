@@ -16,6 +16,8 @@ import Cookies from "./pages/Cookies";
 import FAQ from "./pages/FAQ";
 import ServiceAreas from "./pages/ServiceAreas";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/management/Login";
+import Dashboard from "./pages/management/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,10 @@ const App = () => (
           <Route path="/terms" element={<Terms />} />
           <Route path="/cookies" element={<Cookies />} />
           <Route path="/service-areas" element={<ServiceAreas />} />
+          {/* Management CRM Routes */}
+          <Route path="/management/login" element={<Login />} />
+          <Route path="/management/dashboard" element={<Dashboard />} />
+          <Route path="/management" element={<Login />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
