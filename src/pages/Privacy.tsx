@@ -11,104 +11,98 @@ const Privacy = () => {
           <h1 className="text-5xl font-bold mb-8 animate-fade-in-up">Privacy Policy</h1>
           
           <div className="prose prose-lg max-w-none space-y-6 text-muted-foreground animate-fade-in">
-            <p className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+            <p className="text-sm text-muted-foreground">Last updated: July 27, 2026</p>
             
             <section>
               <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">1. Introduction</h2>
               <p>
-                Estate Nest Inc. ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.estatenest.ca or use our services.
+                Estate Nest Inc. ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you visit our website (www.estatenest.ca), use our automated quote engines, or interact with our services. We operate in strict compliance with the Alberta Personal Information Protection Act (PIPA), the federal Personal Information Protection and Electronic Documents Act (PIPEDA) for Ontario operations, and applicable provincial insurance regulations.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">2. Information We Collect</h2>
-              <p>We collect information that you provide directly to us, including:</p>
+              <p>We collect sensitive personal, financial, and medical information that you voluntarily provide directly to us, including:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Name, email address, phone number, and mailing address</li>
-                <li>Date of birth and social insurance number (for insurance applications)</li>
-                <li>Health and medical information relevant to insurance underwriting</li>
-                <li>Financial information necessary for insurance products</li>
-                <li>Information you provide when contacting us or requesting a quote</li>
+                <li><strong>Identity & Contact Data:</strong> Name, email address, phone number, and mailing address.</li>
+                <li><strong>Demographic & Government Identifiers:</strong> Date of birth, gender, and Social Insurance Number (SIN). Note: Providing your SIN is completely optional for standard quotes but may be required by underwriters for identity verification and anti-money laundering (AML) compliance during formal applications.</li>
+                <li><strong>Underwriting Data:</strong> Health histories, medical records, family medical background, and lifestyle habits (e.g., smoking status) relevant to life insurance underwriting.</li>
+                <li><strong>Financial Data:</strong> Income, employment details, net worth, assets, and banking details necessary for financial planning and processing premium payments.</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">3. How We Use Your Information</h2>
-              <p>We use the information we collect to:</p>
+              <p>We use the collected information strictly to:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Provide, maintain, and improve our services</li>
-                <li>Process insurance applications and claims</li>
-                <li>Communicate with you about our services</li>
-                <li>Send you quotes, policy information, and updates</li>
-                <li>Comply with legal obligations and regulatory requirements</li>
-                <li>Detect, prevent, and address fraud or security issues</li>
+                <li>Process, analyze, and generate life, critical illness, disability, mortgage, and travel insurance quotes.</li>
+                <li>Submit formal underwriting applications to third-party insurance carriers on your behalf.</li>
+                <li>Communicate with you regarding quotes, policy maintenance, updates, and regulatory changes.</li>
+                <li>Comply with our legal obligations, anti-money laundering (AML) mandates, and provincial regulatory requirements.</li>
+                <li>Detect, prevent, and mitigate security threats, cyberattacks, or fraudulent application attempts.</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">4. Information Sharing</h2>
-              <p>We may share your information with:</p>
+              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">4. Consent & Voluntary Submission</h2>
+              <p>
+                By submitting your information via our web forms or automated quote tools, you explicitly consent to the collection, use, and disclosure of your personal data as outlined in this policy. You retain the right to withdraw your consent at any time; however, doing so will immediately terminate our ability to provide insurance brokerage services or maintain active quote processing.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">5. Information Sharing & Third-Party Disclosure</h2>
+              <p>To fulfill your service requests, we share your data with:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Insurance companies and underwriters for policy applications</li>
-                <li>Service providers who assist in our business operations</li>
-                <li>Legal and regulatory authorities when required by law</li>
-                <li>Professional advisors including lawyers and accountants</li>
+                <li><strong>Licensed Insurance Underwriters:</strong> Third-party carrier companies to obtain accurate risk assessments and issue policies.</li>
+                <li><strong>Managing General Agencies (MGAs):</strong> Intermediary compliance networks that manage processing pipelines between our brokers and insurers.</li>
+                <li><strong>Legal & Regulatory Authorities:</strong> The Alberta Insurance Council (AIC), the Financial Services Regulatory Authority of Ontario (FSRA), or law enforcement bodies when mandated by Canadian law.</li>
               </ul>
               <p className="mt-4">
-                We do not sell your personal information to third parties.
+                <strong>We do not sell, rent, or trade your personal, medical, or financial information to third parties under any circumstances.</strong>
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">5. Data Security</h2>
+              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">6. Cybersecurity Safeguards & Limitation of Liability</h2>
               <p>
-                We implement appropriate technical and organizational measures to protect your personal information. However, no method of transmission over the internet or electronic storage is 100% secure. We maintain E&O (Errors and Omissions) insurance coverage as an additional layer of protection.
+                We implement robust administrative, physical, and technical security controls (including active SSL encryption, network firewalls, and isolated database architectures) to secure your information. However, no data transmission over the internet or electronic storage infrastructure is 100% secure.
+              </p>
+              <p className="mt-4">
+                While Estate Nest Inc. maintains comprehensive Errors & Omissions (E&O) professional liability insurance as required by provincial regulators, this coverage is for professional advice and licensing compliance, and does not serve as a data breach indemnity fund. To the maximum extent permitted by Canadian law, Estate Nest Inc. shall not be held liable for direct, indirect, or consequential damages resulting from unauthorized third-party data interception, malicious cyber warfare, or systemic network breaches that occur beyond our direct technological control.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">6. Your Rights</h2>
-              <p>Under applicable privacy laws, you have the right to:</p>
+              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">7. Your Privacy Rights</h2>
+              <p>Depending on your province of residence (Alberta or Ontario), you have specific statutory rights:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Access your personal information</li>
-                <li>Correct inaccurate information</li>
-                <li>Request deletion of your information (subject to legal requirements)</li>
-                <li>Withdraw consent for certain uses of your information</li>
-                <li>Lodge a complaint with a privacy regulator</li>
+                <li>The right to request access to and a copy of the personal information we hold about you.</li>
+                <li>The right to request correction of inaccurate, incomplete, or outdated information.</li>
+                <li>The right to request the deletion of your personal data, subject to mandatory statutory retention periods imposed on insurance brokerages by the AIC and FSRA.</li>
               </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">7. Cookies and Tracking</h2>
-              <p>
-                We use cookies and similar tracking technologies to improve your experience on our website. For more information, please see our Cookie Policy.
+              <p className="mt-4">
+                To exercise these rights, submit a formal written request to our Privacy Officer at hello@estatenest.ca.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">8. Changes to This Policy</h2>
+              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">8. Cookies & Digital Tracking</h2>
               <p>
-                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last updated" date.
+                We utilize essential, analytical, and functional cookies to monitor website performance, remember user preferences, and streamline our automated quoting pipelines. You can configure your browser to reject cookies, though doing so may break certain automated form features on our site.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">9. Contact Us</h2>
-              <p>
-                If you have questions about this Privacy Policy or our privacy practices, please contact us:
-              </p>
+              <p>For inquiries regarding this Privacy Policy or our general data security protocols:</p>
               <div className="mt-4 p-4 bg-muted rounded-lg">
                 <p className="font-semibold text-foreground">Estate Nest Inc.</p>
                 <p>Email: hello@estatenest.ca</p>
                 <p>Phone: 780-860-3191</p>
-                <p>Address: Edmonton, Alberta, Canada</p>
+                <p>Website: www.estatenest.ca</p>
+                <p>Corporate Address: Edmonton, Alberta, Canada</p>
               </div>
-            </section>
-
-            <section className="mt-8 p-6 bg-primary/10 rounded-lg">
-              <p className="text-foreground">
-                <strong>E&O Insurance Disclaimer:</strong> Estate Nest Inc. maintains Errors & Omissions insurance coverage. Your personal information is handled in accordance with industry best practices and applicable privacy legislation including PIPEDA (Personal Information Protection and Electronic Documents Act).
-              </p>
             </section>
           </div>
         </div>
