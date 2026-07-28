@@ -76,14 +76,15 @@ const Login = () => {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-slate-300">Username or Email</Label>
+                <Label htmlFor="username" className="text-slate-300">Username</Label>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="EstateNest2026"
+                  placeholder="admin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  autoComplete="username"
                   className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
@@ -93,10 +94,11 @@ const Login = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  autoComplete="current-password"
                   className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
@@ -120,7 +122,12 @@ const Login = () => {
           </form>
         </Card>
 
-        <p className="text-center text-slate-500 text-sm mt-6">
+        <div className="mt-6 p-3 bg-slate-800/30 border border-slate-700 rounded-lg">
+          <p className="text-center text-slate-400 text-xs mb-1">Default Login Credentials:</p>
+          <p className="text-center text-slate-300 text-sm font-mono">admin / TestEN</p>
+        </div>
+        
+        <p className="text-center text-slate-500 text-sm mt-4">
           Need help? Contact <a href="mailto:hello@estatenest.ca" className="text-primary hover:underline">hello@estatenest.ca</a>
         </p>
       </div>
