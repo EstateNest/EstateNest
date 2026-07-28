@@ -10,7 +10,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "dev:api": "tsx watch api/server.ts",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\"",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:api": "playwright test crm.spec.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
@@ -72,6 +76,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.62.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
