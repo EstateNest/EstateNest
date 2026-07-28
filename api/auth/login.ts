@@ -1,12 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import * as bcrypt from 'bcryptjs';
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Hardcoded admin credentials for development/fallback
+// In production, use Supabase with proper user management
 const ADMIN_CREDENTIALS = {
   username: 'admin',
   email: 'admin@estatenest.ca',
@@ -35,45 +30,49 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', 'https://www.estatenest.ca');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
-const app = new Hono();
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-// CORS
-app.use('*', cors({
-  origin: 'https://www.estatenest.ca',
-  credentials: true,
-}));
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-app.post('/', async (c) => {
   // Rate limiting
-  const ip = c.req.header('x-forwarded-for') || 'unknown';
+  const ip = req.headers['x-forwarded-for'] as string || 'unknown';
   if (isRateLimited(ip)) {
-    return c.json({
+    return res.status(429).json({
       error: 'Too Many Requests',
       message: 'Too many login attempts. Please try again later.',
-    }, 429);
+    });
   }
 
   try {
-    const { username, password } = await c.req.json();
+    const { username, password } = req.body;
 
     if (!username || !password) {
-      return c.json({
+      return res.status(400).json({
         error: 'Validation Error',
         message: 'Username and password are required',
-      }, 400);
+      });
     }
 
-    // Check hardcoded admin credentials first (fallback)
+    // Check hardcoded admin credentials
     if ((username.toLowerCase() === ADMIN_CREDENTIALS.username || 
          username.toLowerCase() === ADMIN_CREDENTIALS.email) && 
         password === ADMIN_CREDENTIALS.password) {
       const sessionToken = Buffer.from(`admin:${Date.now()}`).toString('base64url');
-      c.header('Set-Cookie', `en_session=${sessionToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`);
-      return c.json({
+      
+      res.setHeader('Set-Cookie', `en_session=${sessionToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`);
+      
+      return res.status(200).json({
         success: true,
         user: {
           id: 'admin-001',
@@ -87,83 +86,17 @@ app.post('/', async (c) => {
       });
     }
 
-    // Try Supabase if configured
-    if (supabaseUrl && supabaseServiceKey) {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      const isEmail = username.includes('@');
-      
-      let query = supabase.from('users').select('*');
-      if (isEmail) {
-        query = query.eq('email', username.toLowerCase());
-      } else {
-        query = query.ilike('username', username);
-      }
-
-      const { data: users, error: userError } = await query.limit(1);
-
-      if (userError) {
-        console.error('Database error:', userError);
-        return c.json({
-          error: 'Server Error',
-          message: 'An error occurred. Please try again.',
-        }, 500);
-      }
-
-      const user = users?.[0];
-
-      if (!user) {
-        return c.json({
-          error: 'Authentication Failed',
-          message: 'Invalid username or password',
-        }, 401);
-      }
-
-      if (!user.is_active) {
-        return c.json({
-          error: 'Account Disabled',
-          message: 'Your account has been disabled.',
-        }, 403);
-      }
-
-      const isValid = await verifyPassword(password, user.password_hash);
-
-      if (!isValid) {
-        return c.json({
-          error: 'Authentication Failed',
-          message: 'Invalid username or password',
-        }, 401);
-      }
-
-      const sessionToken = Buffer.from(`${user.id}:${Date.now()}`).toString('base64url');
-      c.header('Set-Cookie', `en_session=${sessionToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`);
-
-      return c.json({
-        success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          firstName: user.first_name,
-          lastName: user.last_name,
-        },
-        message: 'Login successful',
-      });
-    }
-
-    // No Supabase configured and credentials don't match hardcoded
-    return c.json({
+    // Invalid credentials
+    return res.status(401).json({
       error: 'Authentication Failed',
       message: 'Invalid username or password',
-    }, 401);
+    });
 
   } catch (error) {
     console.error('Login error:', error);
-    return c.json({
+    return res.status(500).json({
       error: 'Server Error',
       message: 'An error occurred. Please try again.',
-    }, 500);
+    });
   }
-});
-
-export default app;
+}
