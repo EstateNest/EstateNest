@@ -93,7 +93,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const user = users?.[0];
-    console.log('User found:', user ? user.username : 'none');
 
     if (!user) {
       return res.status(401).json({
@@ -110,9 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Verify password
-    console.log('Verifying password:', password, 'against hash:', user.password_hash.substring(0, 20) + '...');
     const isValid = await verifyPassword(password, user.password_hash);
-    console.log('Password valid:', isValid);
 
     if (!isValid) {
       return res.status(401).json({
