@@ -8,11 +8,15 @@ const Footer = () => {
     <footer className="bg-gradient-to-b from-muted/50 to-muted pt-16 pb-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {/* Company Info */}
+          {/* Company Info - Match Header Style */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow">
-                <span className="text-primary-foreground font-bold text-xl">EN</span>
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <img 
+                  src="https://www.estatenest.ca/assets/icon-02-COB_vzEe.png" 
+                  alt="Estate Nest Logo" 
+                  className="w-10 h-10 object-contain"
+                />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 Estate Nest
@@ -29,18 +33,25 @@ const Footer = () => {
               <p>✓ Families Protected in AB & ON</p>
               <p>✓ $50M+ Coverage Placed</p>
             </div>
+            {/* Contact Info - Match Header */}
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <Phone className="w-4 h-4" />
+              <span>780-860-3191</span>
+            </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Links - Match Header Navigation */}
           <div>
             <h3 className="font-semibold text-foreground mb-4">Quick Links</h3>
             <ul className="space-y-2">
               {[
                 { name: "Home", path: "/" },
-                { name: "Services", path: "/services" },
-                { name: "Service Areas", path: "/service-areas" },
-                { name: "FAQ", path: "/faq" },
                 { name: "About Us", path: "/about" },
+                { name: "Services", path: "/services" },
+                { name: "Need Analysis", path: "/calculators" },
+                { name: "FAQs", path: "/faq" },
+                { name: "Service Areas", path: "/service-areas" },
+                { name: "Contact", path: "/contact" },
                 { name: "Get a Quote", path: "/quote" },
               ].map((link) => (
                 <li key={link.path}>
@@ -52,6 +63,14 @@ const Footer = () => {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  to="/management"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Admin Login
+                </Link>
+              </li>
             </ul>
           </div>
 
