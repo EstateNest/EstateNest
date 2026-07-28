@@ -435,13 +435,13 @@ Properly structured buy-sell arrangements can help ensure smooth business transi
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/quote">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
+                <Button size="lg" className="bg-white text-primary hover:bg-gray-100 shadow-glow px-8">
                   Get Your Free Quote
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <a href="tel:780-860-3191">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
                   <Phone className="mr-2 w-5 h-5" />
                   780-860-3191
                 </Button>
