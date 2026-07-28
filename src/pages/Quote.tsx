@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +18,11 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 import { toast } from "@/hooks/use-toast";
-import { Shield, CheckCircle } from "lucide-react";
+import { Shield, CheckCircle, Award } from "lucide-react";
 
 const Quote = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -52,10 +54,10 @@ const Quote = () => {
     "Other",
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Client-side validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
       toast({
         title: "Missing Information",
@@ -77,9 +79,8 @@ const Quote = () => {
     }
 
     // Phone validation (basic)
-    const phoneRegex = /^\d{10}$/;
     const cleanPhone = formData.phone.replace(/\D/g, "");
-    if (!phoneRegex.test(cleanPhone)) {
+    if (cleanPhone.length < 10) {
       toast({
         title: "Invalid Phone Number",
         description: "Please enter a valid 10-digit phone number.",
@@ -111,31 +112,75 @@ const Quote = () => {
       return;
     }
 
-    // In production, this would send to hello@estatenest.ca
-    console.log("Form submitted:", formData);
-    
-    toast({
-      title: "Quote Request Submitted!",
-      description: "We'll contact you within 24 hours to discuss your coverage options.",
-    });
+    // Submit to API
+    setIsSubmitting(true);
 
-    // Reset form
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      smokingHistory: "",
-      medicalHistory: "",
-      medicalCondition: "",
-      medicineName: "",
-      dosage: "",
-      insuranceAmount: "",
-      insuranceType: "",
-      readyToProceed: "",
-    });
-    setAcceptedPrivacy(false);
-    setCaptchaVerified(false);
+    try {
+      const response = await fetch('/api/submit-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Conversion tracking - fire after successful submission
+        // Note: Does NOT send any PII to analytics
+        if (typeof window !== 'undefined') {
+          // Google Analytics 4
+          if ((window as any).gtag) {
+            (window as any).gtag('event', 'quote_request_submitted', {
+              event_category: 'lead_generation',
+              event_label: 'quote_form',
+              insurance_type: formData.insuranceType
+            });
+          }
+          // Console log for debugging (remove in production if not needed)
+          console.log('[Analytics] Quote request submitted successfully');
+        }
+
+        toast({
+          title: "Quote Request Submitted!",
+          description: "We'll contact you within 24 hours to discuss your coverage options.",
+        });
+
+        // Reset form
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          smokingHistory: "",
+          medicalHistory: "",
+          medicalCondition: "",
+          medicineName: "",
+          dosage: "",
+          insuranceAmount: "",
+          insuranceType: "",
+          readyToProceed: "",
+        });
+        setAcceptedPrivacy(false);
+        setCaptchaVerified(false);
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: result.message || "Please try again or contact us directly.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -158,7 +203,7 @@ const Quote = () => {
           </div>
 
           {/* Trust Indicators */}
-          <div className="grid md:grid-cols-3 gap-4 mb-12 animate-fade-in">
+          <div className="grid md:grid-cols-4 gap-4 mb-12 animate-fade-in">
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
               <Shield className="w-8 h-8 text-primary" />
               <div>
@@ -178,6 +223,13 @@ const Quote = () => {
               <div>
                 <div className="font-semibold text-sm">$50M+</div>
                 <div className="text-xs text-muted-foreground">Coverage Placed</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
+              <Award className="w-8 h-8 text-primary" />
+              <div>
+                <div className="font-semibold text-sm">5.0 ★ Google</div>
+                <div className="text-xs text-muted-foreground">47 Reviews</div>
               </div>
             </div>
           </div>
@@ -393,9 +445,20 @@ const Quote = () => {
                 <Button
                   type="submit"
                   size="lg"
+                  disabled={isSubmitting}
                   className="w-full bg-gradient-accent hover:shadow-glow text-lg"
                 >
-                  Submit Quote Request
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Quote Request'
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -415,6 +478,11 @@ const Quote = () => {
                   Email Us
                 </Button>
               </a>
+              <Link to="/faq">
+                <Button variant="outline" size="lg">
+                  View FAQ
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

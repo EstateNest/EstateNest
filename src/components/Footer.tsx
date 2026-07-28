@@ -38,10 +38,10 @@ const Footer = () => {
               {[
                 { name: "Home", path: "/" },
                 { name: "Services", path: "/services" },
+                { name: "Service Areas", path: "/service-areas" },
+                { name: "FAQ", path: "/faq" },
                 { name: "About Us", path: "/about" },
                 { name: "Get a Quote", path: "/quote" },
-                { name: "Calculators", path: "/calculators" },
-                { name: "Careers", path: "/careers" },
               ].map((link) => (
                 <li key={link.path}>
                   <Link
@@ -90,7 +90,7 @@ const Footer = () => {
               </a>
               <div className="flex items-start space-x-3 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4 mt-0.5" />
-                <span>Edmonton, Alberta, Canada</span>
+                <span>7739 8 Ave SW, Edmonton, Alberta T6X 0A3</span>
               </div>
             </div>
 

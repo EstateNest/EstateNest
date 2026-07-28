@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
-import { Shield, Users, Award, Target, Heart, TrendingUp, CheckCircle, ArrowRight } from "lucide-react";
+import { Shield, Users, Award, Target, Heart, TrendingUp, CheckCircle, ArrowRight, MapPin, Mail, Phone } from "lucide-react";
 
 const About = () => {
   const values = [
@@ -31,10 +31,10 @@ const About = () => {
   ];
 
   const stats = [
+    { label: "Google Rating", value: "5.0 ★", icon: Award },
     { label: "Families Protected", value: "500+", icon: Users },
     { label: "Coverage Placed", value: "$50M+", icon: TrendingUp },
-    { label: "Years Experience", value: "15+", icon: Award },
-    { label: "Client Satisfaction", value: "98%", icon: Heart },
+    { label: "Client Reviews", value: "47", icon: Heart },
   ];
 
   const whyChooseUs = [
@@ -188,12 +188,89 @@ const About = () => {
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Link to="/contact">
+                <Link to="/faq">
                   <Button size="lg" variant="outline" className="px-8">
-                    Contact Us
+                    View FAQ
                   </Button>
                 </Link>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Location & Contact Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold mb-4">Contact & Location</h2>
+              <p className="text-muted-foreground">Get in touch with our team</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="text-center">
+                <CardContent className="p-6">
+                  <MapPin className="w-10 h-10 text-primary mx-auto mb-4" />
+                  <h3 className="font-bold text-foreground mb-2">Our Office</h3>
+                  <p className="text-muted-foreground text-sm">
+                    7739 8 Ave SW<br />
+                    Edmonton, Alberta<br />
+                    T6X 0A3, Canada
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    By appointment only
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="text-center">
+                <CardContent className="p-6">
+                  <Phone className="w-10 h-10 text-primary mx-auto mb-4" />
+                  <h3 className="font-bold text-foreground mb-2">Phone</h3>
+                  <a href="tel:780-860-3191" className="text-primary hover:underline">
+                    780-860-3191
+                  </a>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Monday - Friday: 9 AM - 5 PM MT
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="text-center">
+                <CardContent className="p-6">
+                  <Mail className="w-10 h-10 text-primary mx-auto mb-4" />
+                  <h3 className="font-bold text-foreground mb-2">Email</h3>
+                  <a href="mailto:hello@estatenest.ca" className="text-primary hover:underline">
+                    hello@estatenest.ca
+                  </a>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    We respond within 24 hours
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Regulatory Information */}
+            <div className="mt-12 p-6 bg-card rounded-xl shadow-card">
+              <h3 className="font-bold text-foreground mb-4 text-center">Regulatory Information</h3>
+              <div className="grid md:grid-cols-2 gap-6 text-sm">
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Alberta</h4>
+                  <p className="text-muted-foreground">
+                    Insurance licensing and market conduct in Alberta are regulated by the Alberta Insurance Council (AIC).
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Ontario</h4>
+                  <p className="text-muted-foreground">
+                    Insurance activities in Ontario are regulated by the Financial Services Regulatory Authority of Ontario (FSRA).
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                Estate Nest Inc. operates under applicable provincial licensing requirements. E&O insurance coverage in effect.
+              </p>
             </div>
           </div>
         </div>
