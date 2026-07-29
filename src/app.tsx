@@ -18,6 +18,7 @@ import ServiceAreas from "./pages/ServiceAreas";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/management/Login";
 import Dashboard from "./pages/management/Dashboard";
+import GA4 from "./components/GA4";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <GA4 />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
