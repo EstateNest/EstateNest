@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Hardcoded admin credentials for development/fallback
 // In production, use Supabase with proper user management
 const ADMIN_CREDENTIALS = {
-  username: 'admin',
+  username: 'EstateNest2026',
   email: 'admin@estatenest.ca',
   password: 'TestEN'
 };

@@ -124,7 +124,7 @@ const Login = () => {
 
         <div className="mt-6 p-3 bg-slate-800/30 border border-slate-700 rounded-lg">
           <p className="text-center text-slate-400 text-xs mb-1">Default Login Credentials:</p>
-          <p className="text-center text-slate-300 text-sm font-mono">admin / TestEN</p>
+          <p className="text-center text-slate-300 text-sm font-mono">EstateNest2026 / TestEN</p>
         </div>
         
         <p className="text-center text-slate-500 text-sm mt-4">

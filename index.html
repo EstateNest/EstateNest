@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <!-- Apple Touch Icon for mobile bookmarks -->
+    <link rel="apple-touch-icon" href="/icon.jpeg" />
 
     <title>Life Insurance Alberta & Ontario | Estate Nest Inc</title>
     <meta name="description" content="Get expert life, mortgage, and critical illness insurance in AB & ON. E&O insured with 5-star Google reviews. Secure your family with Estate Nest Inc today." />
@@ -32,9 +33,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Google Analytics 4 - GA4 will be loaded when VITE_PUBLIC_GA_ID is set in environment variables -->
-    <!-- DO NOT hardcode GA ID - Use Vercel Dashboard → Settings → Environment Variables -->
-    <!-- Set: VITE_PUBLIC_GA_ID = G-XXXXXXXXXX (your actual GA4 Measurement ID) -->
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "68cnkf1i9n");
+    </script>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MMQH7HJ');</script>
+    <!-- End Google Tag Manager -->
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-20HKYHFVLK"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-20HKYHFVLK');
+    </script>
     
     <!-- Primary Organization Schema (verified from Google Business Profile) -->
     <script type="application/ld+json">
@@ -193,6 +216,10 @@
   </head>
 
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MMQH7HJ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

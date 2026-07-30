@@ -98,18 +98,18 @@ const Index = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/quote">
-                  <Button size="lg" className="w-full sm:w-auto bg-gradient-accent hover:shadow-glow text-lg px-8 group">
+                <Button size="lg" className="w-full sm:w-auto bg-gradient-accent hover:shadow-glow text-lg px-8 group" asChild>
+                  <Link to="/quote">
                     Get Free Quote
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-                <a href="tel:780-860-3191">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 group">
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 group" asChild>
+                  <a href="tel:780-860-3191">
                     <Phone className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
                     780-860-3191
-                  </Button>
-                </a>
+                  </a>
+                </Button>
               </div>
 
               {/* Trust Indicators */}
@@ -132,7 +132,9 @@ const Index = () => {
             <img
   src={mainImage}
   alt="Happy family protected by Estate Nest insurance"
-  className="relative rounded-3xl shadow-elegant w-full object-cover h-65" // h-64 is 16rem height
+  width={800}
+  height={533}
+  className="relative rounded-3xl shadow-elegant w-full object-cover h-64 md:h-80"
 />
 
 
@@ -188,12 +190,12 @@ const Index = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Link to="/services">
-              <Button size="lg" variant="outline" className="group">
+            <Button size="lg" variant="outline" className="group" asChild>
+              <Link to="/services">
                 View All Services
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -213,16 +215,16 @@ const Index = () => {
               Get a personalized quote in minutes. No obligations, just peace of mind.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/quote">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8" asChild>
+                <Link to="/quote">
                   Get Your Free Quote
-                </Button>
-              </Link>
-              <Link to="/calculators">
-                <Button size="lg" variant="outline" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8" asChild>
+                <Link to="/calculators">
                   Try Our Calculators
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
