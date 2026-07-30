@@ -74,6 +74,9 @@
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
   },
+  "overrides": {
+    "@fastify/busboy@<3.2.0": "3.2.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@playwright/test": "^1.62.0",
