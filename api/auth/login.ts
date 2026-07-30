@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Hardcoded admin credentials for development/fallback
+// Admin credentials for Estate Nest CRM
 // In production, use Supabase with proper user management
 const ADMIN_CREDENTIALS = {
   username: 'EstateNest2026',
-  email: 'admin@estatenest.ca',
+  email: 'kanwar@estatenest.ca',
   password: 'TestEN'
 };
 
@@ -45,11 +45,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success: true,
         user: {
           id: 'admin-001',
-          username: 'admin',
-          email: 'admin@estatenest.ca',
+          username: 'EstateNest2026',
+          email: 'kanwar@estatenest.ca',
           role: 'admin',
-          firstName: 'Admin',
-          lastName: 'User',
+          firstName: 'Kanwar',
+          lastName: 'Admin',
         },
         message: 'Login successful',
       });

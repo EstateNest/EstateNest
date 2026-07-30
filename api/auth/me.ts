@@ -4,21 +4,21 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Hardcoded admin user for fallback
+// Admin user for Estate Nest CRM
 const ADMIN_USER = {
   id: 'admin-001',
-  username: 'admin',
-  email: 'admin@estatenest.ca',
+  username: 'EstateNest2026',
+  email: 'kanwar@estatenest.ca',
   role: 'admin',
-  first_name: 'Admin',
-  last_name: 'User',
+  first_name: 'Kanwar',
+  last_name: 'Admin',
   is_active: true
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://www.estatenest.ca');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
