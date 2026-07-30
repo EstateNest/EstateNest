@@ -80,11 +80,11 @@ const Navigation = () => {
   <Phone className="w-4 h-4" />
   <span>780-860-3191</span>
 </div>
-            <Link to="/quote">
-              <Button className="bg-gradient-accent hover:shadow-glow transition-all">
+            <Button className="bg-gradient-accent hover:shadow-glow transition-all" asChild>
+              <Link to="/quote">
                 Get Free Quote
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -130,11 +130,11 @@ const Navigation = () => {
                   <Mail className="w-4 h-4" />
                   <span>hello@estatenest.ca</span>
                 </a>
-                <Link to="/quote" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full bg-gradient-accent hover:shadow-glow">
+                <Button className="w-full bg-gradient-accent hover:shadow-glow" asChild>
+                  <Link to="/quote" onClick={() => setIsOpen(false)}>
                     Get Free Quote
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
