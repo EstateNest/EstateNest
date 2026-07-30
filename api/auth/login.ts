@@ -9,10 +9,10 @@ const ADMIN_CREDENTIALS = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', 'https://www.estatenest.ca');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // CORS headers - allow all origins for flexibility
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
