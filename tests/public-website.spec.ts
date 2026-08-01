@@ -93,6 +93,10 @@ test.describe('EstateNest Public Website', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    });
     
     const menuButton = page.getByRole('button', { name: 'Open navigation menu' });
     await expect(menuButton).toBeVisible();
