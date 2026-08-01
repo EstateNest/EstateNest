@@ -30,7 +30,7 @@ test.describe('EstateNest Public Website', () => {
     await page.goto('/');
 
     const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
-    if ((page.viewportSize()?.width ?? 1280) < 1024) {
+    if ((page.viewportSize()?.width ?? 1280) < 1280) {
       await navigation.getByRole('button', { name: 'Open navigation menu' }).click();
     }
 
@@ -43,7 +43,7 @@ test.describe('EstateNest Public Website', () => {
   test('Header quote action opens the quote form', async ({ page }) => {
     await page.goto('/');
 
-    const isMobile = (page.viewportSize()?.width ?? 1280) < 1024;
+    const isMobile = (page.viewportSize()?.width ?? 1280) < 1280;
     if (isMobile) {
       await page.getByRole('button', { name: 'Open navigation menu' }).click();
     }
@@ -55,6 +55,87 @@ test.describe('EstateNest Public Website', () => {
 
     await expect(page).toHaveURL(/\/quote$/);
     await expect(page.getByRole('heading', { name: 'Get Your Free Quote' })).toBeVisible();
+  });
+
+  test('public pages clear the fixed header and expose a distinct active state', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    const destinations = [
+      { name: 'About Us', path: '/about' },
+      { name: 'Services', path: '/services' },
+      { name: 'FAQs', path: '/faq' },
+      { name: 'Service Areas', path: '/service-areas' },
+      { name: 'Contact', path: '/contact' },
+    ];
+
+    for (const destination of destinations) {
+      await page.goto(destination.path);
+
+      const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
+      const activeLink = navigation.getByRole('link', { name: destination.name, exact: true });
+      const heading = page.getByRole('heading', { level: 1 }).first();
+
+      await expect(activeLink).toHaveAttribute('aria-current', 'page');
+      await expect(heading).toBeVisible();
+
+      const activeBackground = await activeLink.evaluate((element) => getComputedStyle(element).backgroundImage);
+      const navigationBox = await navigation.boundingBox();
+      const headingBox = await heading.boundingBox();
+
+      expect(activeBackground).not.toBe('none');
+      expect(navigationBox).not.toBeNull();
+      expect(headingBox).not.toBeNull();
+      expect(headingBox!.y).toBeGreaterThanOrEqual(navigationBox!.y + navigationBox!.height);
+    }
+  });
+
+  test('header adapts at 1024 and 1280 pixels without horizontal overflow', async ({ page }) => {
+    for (const viewport of [
+      { width: 1024, height: 768, compact: true },
+      { width: 1280, height: 800, compact: false },
+    ]) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/services');
+
+      const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
+
+      if (viewport.compact) {
+        await expect(navigation.getByRole('button', { name: 'Open navigation menu' })).toBeVisible();
+        await expect(page.getByTestId('desktop-header-quote')).toBeHidden();
+      } else {
+        await expect(navigation.getByRole('button', { name: 'Open navigation menu' })).toBeHidden();
+        await expect(page.getByTestId('desktop-header-quote')).toBeVisible();
+      }
+
+      const widths = await page.evaluate(() => ({
+        client: document.documentElement.clientWidth,
+        scroll: document.documentElement.scrollWidth,
+      }));
+      expect(widths.scroll).toBe(widths.client);
+    }
+  });
+
+  test('footer navigation opens every public page at the top', async ({ page }) => {
+    const destinations = [
+      { name: 'About Us', path: '/about' },
+      { name: 'Services', path: '/services' },
+      { name: 'FAQs', path: '/faq' },
+      { name: 'Service Areas', path: '/service-areas' },
+      { name: 'Contact', path: '/contact' },
+    ];
+
+    await page.goto('/');
+
+    for (const destination of destinations) {
+      const footerLink = page.locator('footer').getByRole('link', { name: destination.name, exact: true });
+      await footerLink.scrollIntoViewIfNeeded();
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+      await footerLink.click();
+
+      await expect(page).toHaveURL(new RegExp(`${destination.path}$`));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    }
   });
 
   test('Quote Request form works', async ({ page }) => {

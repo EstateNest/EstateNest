@@ -29,6 +29,8 @@ All application colours remain semantic HSL variables in `src/index.css`. Compon
 ## Header
 
 - Keep the Estate Nest logo and name visually stable between pages.
+- Use an opaque cool-blue header surface so hero or page content never reduces navigation contrast.
+- Active navigation uses a restrained blue-to-cyan-to-coral tint plus an underline and `aria-current="page"`; inactive links receive the softer version on hover and focus.
 - Make desktop and mobile quote actions resolve to `/quote`.
 - Desktop navigation should show the current page and a visible hover/focus state without layout shift.
 - The mobile menu control must be at least 44 by 44 pixels, have an accessible name, expose `aria-expanded`, and close after navigation.

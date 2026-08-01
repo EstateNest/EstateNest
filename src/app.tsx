@@ -17,6 +17,7 @@ import Cookies from "./pages/Cookies";
 import FAQ from "./pages/FAQ";
 import ServiceAreas from "./pages/ServiceAreas";
 import NotFound from "./pages/NotFound";
+import ScrollToTop from "./components/ScrollToTop";
 
 const Login = lazy(() => import("./pages/management/Login"));
 const Dashboard = lazy(() => import("./pages/management/Dashboard"));
@@ -30,6 +31,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600">Loading...</div>}>
         <Routes>
           <Route path="/" element={<Index />} />
