@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+
+# python development tooling
+__pycache__/
+*.py[cod]
 
 # next.js
 /.next/

@@ -99,7 +99,27 @@ test.describe('Estate Nest management routing', () => {
     await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Password')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Estate Nest Home', exact: true })).toHaveAttribute('href', '/');
     await expect(page.getByText('Default Login Credentials')).toHaveCount(0);
+  });
+
+  test('login home return is keyboard accessible and reaches the public website', async ({ page }) => {
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Not authenticated' }) });
+    });
+    await page.goto('/management/login');
+
+    const homeLink = page.getByRole('link', { name: 'Estate Nest Home', exact: true });
+    await homeLink.focus();
+    await expect(homeLink).toBeFocused();
+
+    const homeLinkBox = await homeLink.boundingBox();
+    expect(homeLinkBox).not.toBeNull();
+    expect(homeLinkBox!.height).toBeGreaterThanOrEqual(44);
+
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByTestId('homepage-hero-quote')).toBeVisible();
   });
 
   test('valid email and password create a management session', async ({ page }) => {
@@ -291,6 +311,7 @@ test.describe('Estate Nest management routing', () => {
 
     await expect(page).toHaveURL(/\/management\/login$/);
     await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Estate Nest Home', exact: true })).toBeVisible();
   });
 
   test('management API rejection without authentication is preserved', async ({ page }) => {
@@ -331,6 +352,7 @@ test.describe('Supabase management authentication preview', () => {
     await expect(page.getByRole('heading', { name: 'Contacts', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Logout', exact: true }).click();
     await expect(page).toHaveURL(/\/management\/login$/);
+    await expect(page.getByRole('link', { name: 'Estate Nest Home', exact: true })).toBeVisible();
   });
 
   test('real invalid password and unknown email share one error', async ({ page }) => {

@@ -8,7 +8,7 @@ test.describe('EstateNest Public Website', () => {
     await expect(page).toHaveTitle(/Life Insurance/);
     
     // Check navigation
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
     
     // Check hero section
     await expect(page.locator('text=Get Free Quote').first()).toBeVisible();
@@ -19,6 +19,7 @@ test.describe('EstateNest Public Website', () => {
 
     const quoteLink = page.getByTestId('homepage-hero-quote');
     await expect(quoteLink).toBeVisible();
+    await expect(quoteLink).toHaveAttribute('href', '/quote');
     await quoteLink.click();
 
     await expect(page).toHaveURL(/\/quote$/);
@@ -27,12 +28,33 @@ test.describe('EstateNest Public Website', () => {
 
   test('Navigation menu works', async ({ page }) => {
     await page.goto('/');
-    
-    // Check all nav items
+
+    const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
+    if ((page.viewportSize()?.width ?? 1280) < 1024) {
+      await navigation.getByRole('button', { name: 'Open navigation menu' }).click();
+    }
+
     const navItems = ['Home', 'About Us', 'Services', 'Need Analysis', 'FAQs', 'Service Areas', 'Contact'];
     for (const item of navItems) {
-      await expect(page.locator(`nav >> text=${item}`).first()).toBeVisible();
+      await expect(navigation.getByRole('link', { name: item, exact: true })).toBeVisible();
     }
+  });
+
+  test('Header quote action opens the quote form', async ({ page }) => {
+    await page.goto('/');
+
+    const isMobile = (page.viewportSize()?.width ?? 1280) < 1024;
+    if (isMobile) {
+      await page.getByRole('button', { name: 'Open navigation menu' }).click();
+    }
+
+    const quoteLink = page.getByTestId(isMobile ? 'mobile-header-quote' : 'desktop-header-quote');
+    await expect(quoteLink).toBeVisible();
+    await expect(quoteLink).toHaveAttribute('href', '/quote');
+    await quoteLink.click();
+
+    await expect(page).toHaveURL(/\/quote$/);
+    await expect(page.getByRole('heading', { name: 'Get Your Free Quote' })).toBeVisible();
   });
 
   test('Quote Request form works', async ({ page }) => {
@@ -72,8 +94,37 @@ test.describe('EstateNest Public Website', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
     
-    // Mobile menu should be visible
-    await expect(page.locator('button[aria-label="Toggle menu"], button:has-text("Menu")').first()).toBeVisible();
+    const menuButton = page.getByRole('button', { name: 'Open navigation menu' });
+    await expect(menuButton).toBeVisible();
+    await expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+    await expect(menuButton).toHaveAttribute('aria-controls', 'mobile-navigation');
+
+    const menuButtonBox = await menuButton.boundingBox();
+    expect(menuButtonBox).not.toBeNull();
+    expect(menuButtonBox!.width).toBeGreaterThanOrEqual(44);
+    expect(menuButtonBox!.height).toBeGreaterThanOrEqual(44);
+
+    const chatButton = page.getByRole('button', { name: 'Open chat' });
+    const phoneLink = page.getByTestId('homepage-hero-phone');
+    const chatButtonBox = await chatButton.boundingBox();
+    const phoneLinkBox = await phoneLink.boundingBox();
+    expect(chatButtonBox).not.toBeNull();
+    expect(phoneLinkBox).not.toBeNull();
+    const chatOverlapsPhone = !(
+      chatButtonBox!.x + chatButtonBox!.width <= phoneLinkBox!.x
+      || chatButtonBox!.x >= phoneLinkBox!.x + phoneLinkBox!.width
+      || chatButtonBox!.y + chatButtonBox!.height <= phoneLinkBox!.y
+      || chatButtonBox!.y >= phoneLinkBox!.y + phoneLinkBox!.height
+    );
+    expect(chatOverlapsPhone).toBe(false);
+
+    await menuButton.click();
+    await expect(page.getByRole('button', { name: 'Close navigation menu' })).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByTestId('mobile-navigation-panel')).toBeVisible();
+    await expect(page.getByTestId('mobile-header-quote')).toHaveAttribute('href', '/quote');
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute('aria-expanded', 'false');
   });
 });
 

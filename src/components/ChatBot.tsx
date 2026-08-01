@@ -54,19 +54,22 @@ const ChatBot = () => {
       {/* Chat Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-accent rounded-full shadow-glow flex items-center justify-center hover:scale-110 transition-transform"
-        aria-label="Open chat"
+        type="button"
+        aria-label={isOpen ? "Close chat" : "Open chat"}
+        aria-expanded={isOpen}
+        aria-controls="estate-nest-chat"
+        className="fixed bottom-1 right-3 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent shadow-glow transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-6 sm:right-6 sm:h-14 sm:w-14"
       >
         {isOpen ? (
-          <X className="w-6 h-6 text-accent-foreground" />
+          <X aria-hidden="true" className="w-6 h-6 text-accent-foreground" />
         ) : (
-          <MessageCircle className="w-6 h-6 text-accent-foreground" />
+          <MessageCircle aria-hidden="true" className="w-6 h-6 text-accent-foreground" />
         )}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[500px] bg-card rounded-2xl shadow-elegant border border-border flex flex-col animate-scale-in">
+        <div id="estate-nest-chat" className="fixed bottom-20 right-4 z-50 flex h-[500px] w-96 max-w-[calc(100vw-2rem)] flex-col rounded-2xl border border-border bg-card shadow-elegant animate-scale-in sm:bottom-24 sm:right-6 sm:max-w-[calc(100vw-3rem)]">
           {/* Header */}
           <div className="bg-gradient-primary text-primary-foreground p-4 rounded-t-2xl">
             <h3 className="font-semibold">Estate Nest Assistant</h3>
@@ -122,14 +125,16 @@ const ChatBot = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Type your message..."
+                aria-label="Chat message"
                 className="flex-1"
               />
               <Button
                 onClick={handleSend}
                 size="icon"
-                className="bg-gradient-accent hover:shadow-glow"
+                aria-label="Send message"
+                className="min-h-11 min-w-11 bg-gradient-accent hover:shadow-glow"
               >
-                <Send className="w-4 h-4" />
+                <Send aria-hidden="true" className="w-4 h-4" />
               </Button>
             </div>
           </div>

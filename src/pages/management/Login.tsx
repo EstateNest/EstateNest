@@ -1,11 +1,11 @@
 // Management Login Page
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, AlertCircle, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
+import { Shield, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -64,8 +64,19 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <div className="w-full max-w-md">
+        <Button
+          asChild
+          variant="ghost"
+          className="mb-6 min-h-11 px-3 text-slate-300 hover:bg-white/10 hover:text-white focus-visible:ring-white/70"
+        >
+          <Link to="/" data-testid="management-home-link">
+            <ArrowLeft aria-hidden="true" className="mr-2 h-4 w-4" />
+            Estate Nest Home
+          </Link>
+        </Button>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4">
@@ -77,7 +88,7 @@ const Login = () => {
 
         <Card className="border-slate-700 bg-slate-800/50 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-white">Sign In</CardTitle>
+            <h2 className="text-2xl font-semibold leading-none tracking-tight text-white">Sign In</h2>
             <CardDescription className="text-slate-400">
               Enter your credentials to access the management portal
             </CardDescription>
@@ -85,8 +96,8 @@ const Login = () => {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-                  <AlertCircle className="w-4 h-4" />
+                <div role="alert" className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                  <AlertCircle aria-hidden="true" className="w-4 h-4" />
                   {error}
                 </div>
               )}
@@ -101,7 +112,7 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="username"
-                  className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
+                  className="h-11 bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
               
@@ -115,19 +126,19 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
+                  className="h-11 bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
             </CardContent>
             <CardFooter>
               <Button
                 type="submit"
-                className="w-full bg-gradient-primary hover:opacity-90"
+                className="min-h-11 w-full bg-gradient-primary hover:opacity-90"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                    <Loader2 aria-hidden="true" className="mr-2 w-4 h-4 animate-spin" />
                     Signing in...
                   </>
                 ) : (

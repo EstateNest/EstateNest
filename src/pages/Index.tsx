@@ -104,12 +104,12 @@ const Index = () => {
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <a href="tel:780-860-3191">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 group">
+                <Button asChild size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 group">
+                  <a href="tel:780-860-3191" data-testid="homepage-hero-phone">
                     <Phone className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
                     780-860-3191
-                  </Button>
-                </a>
+                  </a>
+                </Button>
               </div>
 
               {/* Trust Indicators */}
@@ -188,12 +188,12 @@ const Index = () => {
           </div>
 
           <div className="text-center mt-12">
-            <Link to="/services">
-              <Button size="lg" variant="outline" className="group">
+            <Button asChild size="lg" variant="outline" className="group">
+              <Link to="/services">
                 View All Services
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -213,16 +213,16 @@ const Index = () => {
               Get a personalized quote in minutes. No obligations, just peace of mind.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/quote">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
+              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
+                <Link to="/quote">
                   Get Your Free Quote
-                </Button>
-              </Link>
-              <Link to="/calculators">
-                <Button size="lg" variant="outline" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-glow px-8">
+                <Link to="/calculators">
                   Try Our Calculators
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

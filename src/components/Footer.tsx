@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Facebook, Linkedin, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import { CheckCircle2, Facebook, Linkedin, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import logo from "../assets/icon-02.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -10,11 +11,11 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {/* Company Info - Match Header Style */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2 group">
+            <Link to="/" aria-label="Estate Nest home" className="flex items-center space-x-2 rounded-md group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <img 
-                  src="https://www.estatenest.ca/assets/icon-02-COB_vzEe.png" 
-                  alt="Estate Nest Logo" 
+                  src={logo}
+                  alt=""
                   className="w-10 h-10 object-contain"
                 />
               </div>
@@ -26,18 +27,24 @@ const Footer = () => {
               Protecting families with comprehensive insurance solutions. Licensed & insured in Alberta and Ontario.
             </p>
             <div className="flex items-center space-x-2 text-sm">
-              <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+              <div aria-hidden="true" className="w-2 h-2 bg-accent rounded-full animate-pulse" />
               <span className="font-semibold text-foreground">E&O Insured</span>
             </div>
-            <div className="space-y-1 text-sm text-muted-foreground">
-              <p>✓ Families Protected in AB & ON</p>
-              <p>✓ $50M+ Coverage Placed</p>
-            </div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
+                <span>Families Protected in AB & ON</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
+                <span>$50M+ Coverage Placed</span>
+              </li>
+            </ul>
             {/* Contact Info - Match Header */}
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Phone className="w-4 h-4" />
+            <a href="tel:780-860-3191" className="flex min-h-11 items-center space-x-2 rounded-md text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <Phone aria-hidden="true" className="w-4 h-4" />
               <span>780-860-3191</span>
-            </div>
+            </a>
           </div>
 
           {/* Quick Links - Match Header Navigation */}
@@ -57,7 +64,7 @@ const Footer = () => {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="inline-flex min-h-11 items-center rounded-md text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-0"
                   >
                     {link.name}
                   </Link>
@@ -66,7 +73,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/management"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="inline-flex min-h-11 items-center rounded-md text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-0"
                 >
                   Admin Login
                 </Link>
@@ -95,20 +102,20 @@ const Footer = () => {
             <div className="space-y-3">
               <a
                 href="tel:780-860-3191"
-                className="flex items-center space-x-3 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                className="flex min-h-11 items-center space-x-3 rounded-md text-sm text-muted-foreground transition-colors group hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Phone className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <Phone aria-hidden="true" className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 <span>780-860-3191</span>
               </a>
               <a
                 href="mailto:hello@estatenest.ca"
-                className="flex items-center space-x-3 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                className="flex min-h-11 items-center space-x-3 rounded-md text-sm text-muted-foreground transition-colors group hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Mail className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <Mail aria-hidden="true" className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 <span>hello@estatenest.ca</span>
               </a>
               <div className="flex items-start space-x-3 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 mt-0.5" />
+                <MapPin aria-hidden="true" className="w-4 h-4 mt-0.5" />
                 <span>7739 8 Ave SW, Edmonton, Alberta T6X 0A3</span>
               </div>
             </div>
@@ -121,7 +128,7 @@ const Footer = () => {
                   href="https://facebook.com/estatenest"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:scale-110 hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Facebook"
                 >
                   <Facebook className="w-4 h-4" />
@@ -130,7 +137,7 @@ const Footer = () => {
                   href="https://linkedin.com/company/estatenest"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:scale-110 hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="LinkedIn"
                 >
                   <Linkedin className="w-4 h-4" />
@@ -139,7 +146,7 @@ const Footer = () => {
                   href="https://twitter.com/estatenest"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:scale-110 hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Twitter"
                 >
                   <Twitter className="w-4 h-4" />

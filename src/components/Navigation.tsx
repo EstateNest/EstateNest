@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, Icon } from "lucide-react";
+import { Menu, X, Phone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "../assets/icon-02.png";
 
@@ -19,6 +19,23 @@ const Navigation = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
   const navItems = [
     { name: "Home", path: "/" },
     { name: "About Us", path: "/about" },
@@ -31,17 +48,20 @@ const Navigation = () => {
 
   return (
     <nav
+      aria-label="Primary navigation"
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        isScrolled
-          ? "bg-background/95 backdrop-blur-md shadow-elegant"
-          : "bg-transparent"
+        "fixed top-0 left-0 right-0 z-[60] transition-all duration-300",
+        isOpen
+          ? "bg-background shadow-elegant"
+          : isScrolled
+            ? "bg-background/95 backdrop-blur-md shadow-elegant"
+            : "bg-transparent"
       )}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
          {/* Logo */}
-<Link to="/" className="flex items-center space-x-2 group">
+<Link to="/" aria-label="Estate Nest home" className="flex items-center space-x-2 rounded-md group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
   <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform">
     <img
       src={logo}
@@ -76,37 +96,49 @@ const Navigation = () => {
 
           {/* Contact Info & CTA */}
           <div className="hidden lg:flex items-center space-x-4">
-        <div className="hidden lg:flex items-center space-x-2 text-sm text-foreground/70 cursor-default select-none">
-  <Phone className="w-4 h-4" />
-  <span>780-860-3191</span>
-</div>
-            <Link to="/quote">
-              <Button className="bg-gradient-accent hover:shadow-glow transition-all">
+            <a
+              href="tel:780-860-3191"
+              aria-label="Call Estate Nest at 780-860-3191"
+              className="hidden items-center space-x-2 rounded-md text-sm text-foreground/70 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:flex"
+            >
+              <Phone aria-hidden="true" className="w-4 h-4" />
+              <span>780-860-3191</span>
+            </a>
+            <Button asChild className="bg-gradient-accent transition-all hover:shadow-glow">
+              <Link to="/quote" data-testid="desktop-header-quote">
                 Get Free Quote
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 text-foreground hover:text-primary transition-colors"
+            type="button"
+            aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isOpen}
+            aria-controls="mobile-navigation"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? <X aria-hidden="true" className="w-6 h-6" /> : <Menu aria-hidden="true" className="w-6 h-6" />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="lg:hidden py-4 border-t border-border animate-fade-in">
-            <div className="flex flex-col space-y-4">
+          <div
+            id="mobile-navigation"
+            data-testid="mobile-navigation-panel"
+            className="absolute left-0 right-0 top-20 min-h-[calc(100dvh-5rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto border-t border-border bg-background shadow-elegant animate-fade-in lg:hidden"
+          >
+            <div className="container mx-auto flex flex-col space-y-2 px-4 py-4">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "text-sm font-medium transition-colors hover:text-primary px-4 py-2",
+                    "flex min-h-11 items-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     location.pathname === item.path
                       ? "text-primary bg-primary/10"
                       : "text-foreground/70"
@@ -115,26 +147,26 @@ const Navigation = () => {
                   {item.name}
                 </Link>
               ))}
-              <div className="flex flex-col space-y-3 px-4 pt-4 border-t border-border">
+              <div className="flex flex-col space-y-2 border-t border-border pt-4">
                 <a
                   href="tel:780-860-3191"
-                  className="flex items-center space-x-2 text-sm text-foreground/70"
+                  className="flex min-h-11 items-center space-x-2 rounded-md text-sm text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <Phone className="w-4 h-4" />
+                  <Phone aria-hidden="true" className="w-4 h-4" />
                   <span>780-860-3191</span>
                 </a>
                 <a
                   href="mailto:hello@estatenest.ca"
-                  className="flex items-center space-x-2 text-sm text-foreground/70"
+                  className="flex min-h-11 items-center space-x-2 rounded-md text-sm text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <Mail className="w-4 h-4" />
+                  <Mail aria-hidden="true" className="w-4 h-4" />
                   <span>hello@estatenest.ca</span>
                 </a>
-                <Link to="/quote" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full bg-gradient-accent hover:shadow-glow">
+                <Button asChild className="min-h-11 w-full bg-gradient-accent hover:shadow-glow">
+                  <Link to="/quote" data-testid="mobile-header-quote" onClick={() => setIsOpen(false)}>
                     Get Free Quote
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
