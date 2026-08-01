@@ -17,6 +17,21 @@ export function isTrustedOrigin(req: VercelRequest): boolean {
     return true;
   }
 
+  try {
+    const originUrl = new URL(origin);
+    const forwardedHost = Array.isArray(req.headers['x-forwarded-host'])
+      ? req.headers['x-forwarded-host'][0]
+      : req.headers['x-forwarded-host'];
+    const host = forwardedHost || req.headers.host;
+    const requestHost = host?.split(',')[0]?.trim().toLowerCase();
+
+    if (requestHost && ['https:', 'http:'].includes(originUrl.protocol) && originUrl.host.toLowerCase() === requestHost) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
   const configuredOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map((value) => value.trim())
