@@ -77,8 +77,8 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero opacity-10 animate-float" />
-        <div className="container mx-auto px-4">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-hero opacity-10 animate-float" />
+        <div className="relative z-10 container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8 animate-fade-in-up">
               <div className="inline-flex items-center space-x-2 px-4 py-2 bg-primary/10 rounded-full">
@@ -98,12 +98,12 @@ const Index = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/quote">
-                  <Button size="lg" className="w-full sm:w-auto bg-gradient-accent hover:shadow-glow text-lg px-8 group">
+                <Button asChild size="lg" className="w-full sm:w-auto bg-gradient-accent hover:shadow-glow text-lg px-8 group">
+                  <Link to="/quote" data-testid="homepage-hero-quote">
                     Get Free Quote
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 <a href="tel:780-860-3191">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 group">
                     <Phone className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />

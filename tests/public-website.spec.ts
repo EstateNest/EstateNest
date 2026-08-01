@@ -14,6 +14,17 @@ test.describe('EstateNest Public Website', () => {
     await expect(page.locator('text=Get Free Quote').first()).toBeVisible();
   });
 
+  test('Homepage hero quote button opens the quote form', async ({ page }) => {
+    await page.goto('/');
+
+    const quoteLink = page.getByTestId('homepage-hero-quote');
+    await expect(quoteLink).toBeVisible();
+    await quoteLink.click();
+
+    await expect(page).toHaveURL(/\/quote$/);
+    await expect(page.getByRole('heading', { name: 'Get Your Free Quote' })).toBeVisible();
+  });
+
   test('Navigation menu works', async ({ page }) => {
     await page.goto('/');
     
