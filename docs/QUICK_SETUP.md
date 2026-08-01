@@ -28,12 +28,9 @@ Once the database is set up, I'll:
 
 ---
 
-## After Setup - Your Login:
-```
-https://www.estatenest.ca/management/login
-Username: EstateNest2026
-Password: TestEN
-```
+## After Setup - Administrator Login
+
+Open `https://www.estatenest.ca/management/login` and use the private administrator credentials configured in Supabase or encrypted Vercel environment variables.
 
 ---
 

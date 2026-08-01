@@ -1,128 +1,166 @@
-import { test, expect } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-// These tests require the CRM to be running and configured
-const CRM_URL = process.env.CRM_URL || 'https://www.estatenest.ca/management';
+const managementUser = {
+  id: 'test-admin',
+  username: 'test-admin',
+  email: 'admin@example.test',
+  role: 'ADMIN',
+  firstName: 'Test',
+  lastName: 'Administrator',
+};
 
-test.describe('EstateNest CRM', () => {
-  test.beforeEach(async ({ page }) => {
-    // Clear cookies before each test
-    await page.context().clearCookies();
+const contact = {
+  id: 'contact-1',
+  first_name: 'Avery',
+  last_name: 'Chen',
+  email: 'avery@example.test',
+  phone: '780-555-0100',
+  province: 'AB',
+  city: 'Edmonton',
+  created_at: '2026-08-01T12:00:00.000Z',
+};
+
+const lead = {
+  id: 'lead-1',
+  contact_id: contact.id,
+  contact,
+  source: 'ORGANIC_SEARCH',
+  insurance_interest: 'TERM_LIFE',
+  lead_status: 'NEW',
+  lead_score: 70,
+  notes: 'Mock lead for route verification',
+  next_follow_up_at: '2026-08-02T18:00:00.000Z',
+  created_at: '2026-08-01T12:00:00.000Z',
+};
+
+async function mockAuthenticatedManagement(page: Page) {
+  await page.route('**/api/auth/me', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, user: managementUser }) });
   });
-
-  test.describe('Authentication', () => {
-    test('Login page loads', async ({ page }) => {
-      await page.goto(`${CRM_URL}/login`);
-      
-      // Check login form elements
-      await expect(page.locator('input[type="text"], input[name="username"]').first()).toBeVisible();
-      await expect(page.locator('input[type="password"]').first()).toBeVisible();
-      await expect(page.locator('button[type="submit"]').first()).toBeVisible();
-    });
-
-    test('Successful login redirects to dashboard', async ({ page }) => {
-      await page.goto(`${CRM_URL}/login`);
-      
-      // Fill login form
-      await page.fill('input[type="text"], input[name="username"]', 'EstateNest2026');
-      await page.fill('input[type="password"]', 'TestEN');
-      
-      // Submit
-      await page.click('button[type="submit"]');
-      
-      // Wait for redirect to dashboard (allow time for API call)
-      await page.waitForURL('**/management/dashboard**', { timeout: 15000 }).catch(() => {
-        // If already on dashboard or login failed, that's fine for this test
-      });
-      
-      // Check we're on the dashboard or login succeeded
-      const currentUrl = page.url();
-      expect(currentUrl.includes('/management')).toBeTruthy();
-    });
-
-    test('Invalid credentials show error', async ({ page }) => {
-      await page.goto(`${CRM_URL}/login`);
-      
-      // Fill with wrong credentials
-      await page.fill('input[type="text"], input[name="username"]', 'wronguser');
-      await page.fill('input[type="password"]', 'wrongpass');
-      
-      // Submit
-      await page.click('button[type="submit"]');
-      
-      // Wait for error message
-      await expect(page.locator('text=Invalid, text=Error, text=Failed').first()).toBeVisible({ timeout: 5000 });
-    });
-
-    test('Unauthenticated access redirects to login', async ({ page }) => {
-      // Try to access dashboard directly
-      await page.goto(`${CRM_URL}/dashboard`);
-      
-      // Should redirect to login
-      await page.waitForURL('**/login**', { timeout: 10000 }).catch(() => {
-        // May already be on login page
-      });
-      
-      const currentUrl = page.url();
-      expect(currentUrl.includes('/login') || currentUrl.includes('/management')).toBeTruthy();
-    });
+  await page.route('**/api/auth/logout', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
   });
+  await page.route('**/api/crm?*', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const resource = url.searchParams.get('resource');
+    let payload: Record<string, unknown> = { success: true };
 
-  test.describe('Dashboard', () => {
-    test.use({ storageState: undefined }); // Ensure fresh state
-    
-    test.skip('Dashboard shows stats after login', async ({ page }) => {
-      // Login first
-      await page.goto(`${CRM_URL}/login`);
-      await page.fill('input[type="text"], input[name="username"]', 'EstateNest2026');
-      await page.fill('input[type="password"]', 'TestEN');
-      await page.click('button[type="submit"]');
-      
-      // Wait for dashboard
-      await page.waitForURL('**/dashboard**', { timeout: 15000 });
-      
-      // Check dashboard elements
-      await expect(page.locator('text=Dashboard').first()).toBeVisible();
-      
-      // Check for stats cards
-      await expect(page.locator('text=New Leads').or(page.locator('text=Total').or(page.locator('text=Leads'))).first()).toBeVisible({ timeout: 5000 });
-    });
-
-    test.skip('Navigation menu works', async ({ page }) => {
-      // Login first
-      await page.goto(`${CRM_URL}/login`);
-      await page.fill('input[type="text"], input[name="username"]', 'EstateNest2026');
-      await page.fill('input[type="password"]', 'TestEN');
-      await page.click('button[type="submit"]');
-      await page.waitForURL('**/dashboard**', { timeout: 15000 });
-      
-      // Check navigation items
-      const navItems = ['Dashboard', 'Leads', 'Contacts', 'Pipeline', 'Tasks', 'Appointments'];
-      for (const item of navItems) {
-        await expect(page.locator(`nav >> text=${item}`).first()).toBeVisible({ timeout: 3000 }).catch(() => {
-          // Item might not be visible if collapsed
-        });
-      }
-    });
-  });
-
-  test.describe('Lead Management', () => {
-    test.skip('Lead API creates lead in database', async ({ page }) => {
-      // This tests the API directly
-      const response = await page.request.post(`${CRM_URL}/api/leads`, {
-        data: {
-          firstName: 'Playwright',
-          lastName: 'Test',
-          email: 'playwright@test.com',
-          province: 'AB',
-          insuranceInterest: 'TERM_LIFE',
+    if (resource === 'dashboard') {
+      payload = {
+        success: true,
+        stats: {
+          newLeads: 1,
+          needsFollowUp: 1,
+          todaysAppointments: 0,
+          totalContacts: 1,
+          totalLeads: 1,
+          completedLeads: 0,
+          conversionRate: 0,
+          pipelineStatus: { NEW: 1 },
+          leadsBySource: { ORGANIC_SEARCH: 1 },
         },
-        headers: {
-          'Content-Type': 'application/json',
+        recentLeads: [lead],
+        followUpLeads: [lead],
+      };
+    } else if (resource === 'leads') {
+      payload = url.searchParams.get('id') ? { success: true, lead } : { success: true, leads: [lead], total: 1 };
+    } else if (resource === 'contacts') {
+      payload = url.searchParams.get('id')
+        ? { success: true, contact: { ...contact, leads: [lead] } }
+        : { success: true, contacts: [contact], total: 1 };
+    } else if (['tasks', 'appointments', 'content'].includes(resource || '')) {
+      payload = { success: true, items: [] };
+    } else if (resource === 'integrations') {
+      payload = {
+        success: true,
+        integrations: {
+          supabase: true,
+          email: true,
+          googleAnalytics: true,
+          googleTagManager: true,
+          microsoftClarity: true,
         },
-      });
-      
-      // Should succeed or redirect to login
-      expect([200, 201, 401]).toContain(response.status());
+        user: { role: 'ADMIN', environmentManagedPassword: false },
+      };
+    }
+
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(payload) });
+  });
+}
+
+test.describe('Estate Nest management routing', () => {
+  test('login page loads without exposing default credentials', async ({ page }) => {
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Not authenticated' }) });
     });
+    await page.goto('/management/login');
+
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+    await expect(page.getByLabel('Username')).toBeVisible();
+    await expect(page.getByLabel('Password')).toBeVisible();
+    await expect(page.getByText('Default Login Credentials')).toHaveCount(0);
+  });
+
+  test('unauthenticated dashboard access redirects to management login', async ({ page }) => {
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Not authenticated' }) });
+    });
+    await page.goto('/management/dashboard');
+    await expect(page).toHaveURL(/\/management\/login$/);
+  });
+
+  test('every tab opens inside the authenticated management shell', async ({ page }) => {
+    await mockAuthenticatedManagement(page);
+    await page.goto('/management/dashboard');
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+
+    const tabs = [
+      ['Leads', '/management/leads'],
+      ['Contacts', '/management/contacts'],
+      ['Pipeline', '/management/pipeline'],
+      ['Appointments', '/management/appointments'],
+      ['Tasks', '/management/tasks'],
+      ['Content', '/management/content'],
+      ['Reports', '/management/reports'],
+      ['Settings', '/management/settings'],
+    ] as const;
+    const managementNav = page.getByRole('navigation', { name: 'Management navigation' });
+
+    for (const [label, path] of tabs) {
+      await managementNav.getByRole('link', { name: label, exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(page.getByRole('heading', { name: label, exact: true })).toBeVisible();
+      await expect(page.getByText('404')).toHaveCount(0);
+    }
+  });
+
+  test('browser back returns to the previous management tab, not the public homepage', async ({ page }) => {
+    await mockAuthenticatedManagement(page);
+    await page.goto('/management/dashboard');
+    await page.getByRole('navigation', { name: 'Management navigation' }).getByRole('link', { name: 'Leads', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Management navigation' }).getByRole('link', { name: 'Contacts', exact: true }).click();
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/management\/leads$/);
+    await expect(page.getByRole('heading', { name: 'Leads', exact: true })).toBeVisible();
+  });
+
+  test('unknown management URL uses an internal fallback', async ({ page }) => {
+    await mockAuthenticatedManagement(page);
+    await page.goto('/management/does-not-exist');
+
+    await expect(page.getByRole('heading', { name: 'Management page not found' })).toBeVisible();
+    await page.getByRole('link', { name: 'Return to dashboard' }).click();
+    await expect(page).toHaveURL(/\/management\/dashboard$/);
+  });
+
+  test('quick actions open routed management forms', async ({ page }) => {
+    await mockAuthenticatedManagement(page);
+    await page.goto('/management/dashboard');
+
+    await page.getByRole('link', { name: 'Add lead', exact: true }).click();
+    await expect(page).toHaveURL(/\/management\/leads\/new$/);
+    await expect(page.getByRole('dialog').getByRole('heading', { name: 'Add a lead' })).toBeVisible();
   });
 });

@@ -51,7 +51,7 @@ BASE_URL=https://www.estatenest.ca
 
 # Local development
 BASE_URL=http://localhost:5173
-CRM_URL=http://localhost:5173/management
+CRM_URL=http://localhost:8080/management
 
 # API URL (for webhook testing)
 API_URL=http://localhost:3001

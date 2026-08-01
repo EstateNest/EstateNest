@@ -470,21 +470,11 @@ CREATE POLICY audit_log_admin ON audit_log FOR SELECT
   );
 
 -- ============================================
--- SEED DATA: Initial Admin User
+-- ADMINISTRATOR PROVISIONING
 -- ============================================
 
--- Insert initial admin user (password: TestEN - will be changed at deployment)
--- Password hash generated with bcrypt, cost factor 12
-INSERT INTO users (username, email, password_hash, role, first_name, last_name)
-VALUES (
-  'EstateNest2026',
-  'admin@estatenest.ca',
-  -- This hash corresponds to 'TestEN' - should be changed in production
-  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.QWj3K0v1ZZf3m2',
-  'ADMIN',
-  'Estate',
-  'Nest Admin'
-);
+-- Create administrator accounts through a private migration or encrypted
+-- INITIAL_ADMIN_* environment variables. Never commit credentials or password hashes.
 
 -- ============================================
 -- VIEWS: Common Queries

@@ -66,13 +66,9 @@ Once you share the credentials:
 
 ---
 
-## After Setup - Your Login
+## After Setup - Administrator Login
 
-```
-URL: https://www.estatenest.ca/management/login
-Username: EstateNest2026
-Password: TestEN
-```
+Open `https://www.estatenest.ca/management/login` and use the administrator credentials created privately in Supabase or encrypted Vercel environment variables. Production passwords must never be committed.
 
 **⚠️ IMPORTANT: Change password immediately after first login!**
 

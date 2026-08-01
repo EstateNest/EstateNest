@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,8 +17,9 @@ import Cookies from "./pages/Cookies";
 import FAQ from "./pages/FAQ";
 import ServiceAreas from "./pages/ServiceAreas";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/management/Login";
-import Dashboard from "./pages/management/Dashboard";
+
+const Login = lazy(() => import("./pages/management/Login"));
+const Dashboard = lazy(() => import("./pages/management/Dashboard"));
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600">Loading...</div>}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
@@ -42,11 +45,11 @@ const App = () => (
           <Route path="/service-areas" element={<ServiceAreas />} />
           {/* Management CRM Routes */}
           <Route path="/management/login" element={<Login />} />
-          <Route path="/management/dashboard" element={<Dashboard />} />
-          <Route path="/management" element={<Login />} />
+          <Route path="/management/*" element={<Dashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

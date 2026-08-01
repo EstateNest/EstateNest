@@ -250,7 +250,7 @@ GOOGLE_CLIENT_SECRET=xxx
 
 # Gmail
 GMAIL_USER=hello@estatenest.ca
-GMAIL_APP_PASSWORD=cbso jprl fihq pybn
+GMAIL_APP_PASSWORD=replace-with-a-new-app-password-in-n8n-credentials
 ```
 
 ## Testing

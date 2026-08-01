@@ -1,5 +1,5 @@
 // Management Login Page
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,20 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const checkExistingSession = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' });
+        if (active && response.ok) navigate('/management/dashboard', { replace: true });
+      } catch {
+        return;
+      }
+    };
+    void checkExistingSession();
+    return () => { active = false; };
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,11 +49,7 @@ const Login = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store user info in localStorage for client-side checks
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Navigate to dashboard
-      navigate('/management/dashboard');
+      navigate('/management/dashboard', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -80,7 +90,7 @@ const Login = () => {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="admin"
+                  placeholder="Username or email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -122,11 +132,6 @@ const Login = () => {
           </form>
         </Card>
 
-        <div className="mt-6 p-3 bg-slate-800/30 border border-slate-700 rounded-lg">
-          <p className="text-center text-slate-400 text-xs mb-1">Default Login Credentials:</p>
-          <p className="text-center text-slate-300 text-sm font-mono">admin / TestEN</p>
-        </div>
-        
         <p className="text-center text-slate-500 text-sm mt-4">
           Need help? Contact <a href="mailto:hello@estatenest.ca" className="text-primary hover:underline">hello@estatenest.ca</a>
         </p>

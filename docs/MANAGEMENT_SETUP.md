@@ -74,16 +74,16 @@ Edit `.env.local` with your actual values:
 ```env
 # Supabase (REQUIRED)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+SUPABASE_SECRET_KEY=your-secret-key
 
 # Authentication
 AUTH_SECRET=generate-with-openssl-rand-base64-32
 
 # Initial Admin User
-INITIAL_ADMIN_USERNAME=EstateNest2026
-INITIAL_ADMIN_EMAIL=admin@estatenest.ca
-INITIAL_ADMIN_PASSWORD=TestEN
+INITIAL_ADMIN_USERNAME=replace-with-private-admin-username
+INITIAL_ADMIN_EMAIL=replace-with-private-admin-email
+INITIAL_ADMIN_PASSWORD=replace-with-a-random-password-at-least-16-characters
 
 # Email (for lead notifications)
 RESEND_API_KEY=re_your_resend_api_key
@@ -121,10 +121,10 @@ npm run dev
 - GET `/api/auth/me` - Get current user
 
 ### Leads
-- POST `/api/leads` - Create lead
-- GET `/api/leads` - List leads
-- GET `/api/leads/stats` - Dashboard stats
-- PATCH `/api/leads/:id` - Update lead
+- GET `/api/crm?resource=dashboard` - Dashboard metrics
+- GET/POST/PATCH/DELETE `/api/crm?resource=leads` - Authenticated lead management
+- GET/POST/PATCH/DELETE `/api/crm?resource=contacts` - Authenticated contact management
+- POST `/api/submit-quote` - Public quote capture into Supabase CRM
 
 ### Webhooks (Public)
 - POST `/api/webhooks/inbound-lead` - Public lead capture
@@ -132,9 +132,8 @@ npm run dev
 
 ---
 
-## Default Login
+## Administrator Login
 
-- Username: `EstateNest2026`
-- Password: `TestEN`
+Administrator credentials must be created privately in Supabase or supplied through encrypted Vercel environment variables. Never store production credentials in this repository.
 
 **⚠️ IMPORTANT: Change password immediately after first login!**

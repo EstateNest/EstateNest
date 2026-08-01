@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createTransport } from 'nodemailer';
+import { getSupabaseAdmin } from './_lib/supabase.js';
 
 interface QuoteFormData {
   firstName: string;
@@ -53,7 +54,20 @@ function validateFormData(data: QuoteFormData): ValidationError[] {
   return errors;
 }
 
-function generateEmailHtml(data: QuoteFormData, timestamp: string, cleanPhone: string): string {
+function escapeHtml(value: string | undefined): string {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function generateEmailHtml(input: QuoteFormData, timestamp: string, cleanPhone: string): string {
+  const data = Object.fromEntries(
+    Object.entries(input).map(([key, value]) => [key, typeof value === 'string' ? escapeHtml(value) : value]),
+  ) as unknown as QuoteFormData;
+
   return `
 <!DOCTYPE html>
 <html>
@@ -139,6 +153,112 @@ function generateEmailHtml(data: QuoteFormData, timestamp: string, cleanPhone: s
 </body>
 </html>
 `;
+}
+
+function mapInsuranceInterest(insuranceType: string): string {
+  const normalized = insuranceType.toLowerCase();
+  if (normalized.includes('critical')) return 'CRITICAL_ILLNESS';
+  if (normalized.includes('disability')) return 'DISABILITY';
+  if (normalized.includes('travel')) return 'TRAVEL';
+  if (normalized.includes('mortgage')) return 'MORTGAGE_PROTECTION';
+  if (normalized.includes('segregated')) return 'SEGREGATED_FUNDS';
+  if (normalized.includes('group') || normalized.includes('buy-sell') || normalized.includes('business')) return 'BUSINESS';
+  if (normalized.includes('final expense')) return 'WHOLE_LIFE';
+  if (normalized.includes('life')) return 'TERM_LIFE';
+  return 'OTHER';
+}
+
+async function saveQuoteToCrm(data: QuoteFormData, req: VercelRequest): Promise<boolean> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const email = data.email.trim().toLowerCase();
+    const existingContact = await supabase
+      .from('contacts')
+      .select('id')
+      .ilike('email', email)
+      .maybeSingle();
+    let contactId = existingContact.data?.id;
+
+    if (contactId) {
+      const { error } = await supabase
+        .from('contacts')
+        .update({
+          first_name: data.firstName.trim().slice(0, 100),
+          last_name: data.lastName.trim().slice(0, 100),
+          phone: data.phone.trim().slice(0, 50),
+        })
+        .eq('id', contactId);
+      if (error) throw error;
+    } else {
+      const { data: contact, error } = await supabase
+        .from('contacts')
+        .insert({
+          first_name: data.firstName.trim().slice(0, 100),
+          last_name: data.lastName.trim().slice(0, 100),
+          email,
+          phone: data.phone.trim().slice(0, 50),
+          preferred_contact_method: 'EITHER',
+          marketing_consent: false,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      contactId = contact.id;
+    }
+
+    const notes = [
+      `Quote request for ${data.insuranceType}`,
+      data.insuranceAmount ? `Requested coverage: ${data.insuranceAmount}` : null,
+      `Ready to proceed: ${data.readyToProceed === 'yes' ? 'Yes' : 'Needs more information'}`,
+      `Smoking history disclosed: ${data.smokingHistory === 'yes' ? 'Yes' : 'No'}`,
+      `Medical history disclosed: ${data.medicalHistory === 'yes' ? 'Yes - review securely with the prospect' : 'No'}`,
+    ].filter(Boolean).join('\n');
+    const insuranceInterest = mapInsuranceInterest(data.insuranceType);
+    const funnelType = ['TERM_LIFE', 'MORTGAGE_PROTECTION', 'CRITICAL_ILLNESS', 'DISABILITY', 'TRAVEL', 'BUSINESS'].includes(insuranceInterest)
+      ? insuranceInterest
+      : 'GENERAL_INQUIRY';
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .insert({
+        contact_id: contactId,
+        source: 'ORGANIC_SEARCH',
+        landing_page: '/quote',
+        insurance_interest: insuranceInterest,
+        lead_status: 'NEW',
+        lead_score: data.readyToProceed === 'yes' ? 70 : 50,
+        notes,
+      })
+      .select('id')
+      .single();
+    if (leadError) throw leadError;
+
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ipAddress = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor)?.split(',')[0]?.trim() || null;
+    const userAgent = Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'];
+    const { error: funnelError } = await supabase.from('funnel_submissions').insert({
+      lead_id: lead.id,
+      contact_id: contactId,
+      funnel_type: funnelType,
+      source: 'ORGANIC_SEARCH',
+      landing_page: '/quote',
+      referring_url: Array.isArray(req.headers.referer) ? req.headers.referer[0] : req.headers.referer || null,
+      submission_data: {
+        insuranceType: data.insuranceType,
+        insuranceAmount: data.insuranceAmount || null,
+        readyToProceed: data.readyToProceed,
+        smokingHistoryDisclosed: data.smokingHistory === 'yes',
+        medicalHistoryDisclosed: data.medicalHistory === 'yes',
+      },
+      ip_address: ipAddress,
+      user_agent: userAgent?.slice(0, 1000) || null,
+    });
+    if (funnelError) throw funnelError;
+
+    return true;
+  } catch (error) {
+    console.error('CRM quote capture failed:', error instanceof Error ? error.message : 'Unknown error');
+    return false;
+  }
 }
 
 async function sendViaGmail(
@@ -240,6 +360,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     const cleanPhone = data.phone.replace(/\D/g, '');
     const emailHtml = generateEmailHtml(data, timestamp, cleanPhone);
+    const crmSaved = await saveQuoteToCrm(data, req);
 
     // Try Gmail first, then fall back to Resend
     let emailResult = await sendViaGmail(data, emailHtml, timestamp);
@@ -249,7 +370,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       emailResult = await sendViaResend(data, emailHtml);
     }
 
-    if (!emailResult.success) {
+    if (!emailResult.success && !crmSaved) {
       console.error('All email providers failed:', emailResult.error);
       return res.status(503).json({
         success: false,
@@ -257,7 +378,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    console.log('Email sent successfully');
+    if (!emailResult.success) {
+      console.error('Quote was saved to CRM, but email notification failed:', emailResult.error);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Your quote request has been submitted successfully. We will contact you within 24 hours.'

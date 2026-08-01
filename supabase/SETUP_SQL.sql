@@ -220,17 +220,11 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 );
 
 -- =============================================
--- DEFAULT ADMIN USER
+-- ADMINISTRATOR PROVISIONING
 -- =============================================
-INSERT INTO users (username, email, password_hash, first_name, last_name, role)
-VALUES (
-    'EstateNest2026',
-    'admin@estatenest.ca',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.QWj3K0v1ZZf3m2',
-    'Admin',
-    'User',
-    'admin'
-) ON CONFLICT (username) DO NOTHING;
+
+-- Create administrator accounts through a private migration or encrypted
+-- INITIAL_ADMIN_* environment variables. Never commit credentials or password hashes.
 
 -- =============================================
 -- INDEXES FOR PERFORMANCE

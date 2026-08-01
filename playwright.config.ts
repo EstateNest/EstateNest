@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8080';
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -9,7 +11,7 @@ export default defineConfig({
   reporter: 'html',
   
   use: {
-    baseURL: process.env.BASE_URL || 'https://www.estatenest.ca',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -25,10 +27,10 @@ export default defineConfig({
     },
   ],
 
-  webServer: process.env.CI ? undefined : {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+  webServer: process.env.BASE_URL ? undefined : {
+    command: 'npm run dev -- --host 127.0.0.1',
+    url: baseURL,
+    reuseExistingServer: false,
     timeout: 120000,
   },
 });

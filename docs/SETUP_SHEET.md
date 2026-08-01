@@ -40,10 +40,7 @@ Resend key: re____
 ✅ Create test lead
 ✅ Verify CRM login
 
-## Your Login (after setup):
-```
-https://www.estatenest.ca/management/login
-Username: EstateNest2026
-Password: TestEN
-```
+## Administrator Login
+
+Open `https://www.estatenest.ca/management/login` and use credentials stored privately in Supabase or encrypted Vercel environment variables. Never place passwords in this setup sheet.
 ⚠️ Change password on first login!

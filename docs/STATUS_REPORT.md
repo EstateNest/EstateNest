@@ -5,7 +5,7 @@
 ### 1. Database (Supabase)
 - **Status:** ✅ LIVE
 - **Tables:** 13 created
-- **Admin User:** `EstateNest2026` / `TestEN`
+- **Admin User:** Configured privately; no credentials are stored in the repository
 - **Test Lead:** Created successfully
 
 ```bash
@@ -153,8 +153,8 @@ npm test
 
 | Service | Username | Password |
 |---------|----------|----------|
-| CRM Login | EstateNest2026 | TestEN |
-| Gmail SMTP | hello@estatenest.ca | cbso jprl fihq pybn |
+| CRM Login | Private Supabase/Vercel configuration | Rotated secret required |
+| Gmail SMTP | hello@estatenest.ca | Store only in encrypted Vercel variables |
 | Supabase | (API Keys) | In vercel.env.production |
 
 ---

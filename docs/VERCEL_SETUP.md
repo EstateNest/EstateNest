@@ -13,9 +13,9 @@ Click **Environment Variables** and add each of these:
 | Name | Value | Environments |
 |------|-------|--------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxx.supabase.co` | Production, Preview, Development |
-| `SUPABASE_ANON_KEY` | `eyJhbGc...` | Production, Preview, Development |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGc...` | **Production only** (secret) |
-| `AUTH_SECRET` | Generate below | Production |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` | Production, Preview, Development |
+| `SUPABASE_SECRET_KEY` | `sb_secret_...` | **Production only** (sensitive) |
+| `AUTH_SECRET` | Generate below | Production, Preview |
 | `RESEND_API_KEY` | `re_...` | Production |
 | `LEAD_NOTIFICATION_EMAIL_1` | `hello@estatenest.ca` | Production |
 | `LEAD_NOTIFICATION_EMAIL_2` | `kanwar@estatenest.ca` | Production |
