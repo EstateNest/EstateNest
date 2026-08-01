@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import bcrypt from 'bcryptjs';
-import { getSessionUser, isTrustedOrigin } from '../_lib/session.js';
-import { getSupabaseAdmin } from '../_lib/supabase.js';
+import { createSupabaseAuthClient, getManagementAuth, setAuthSessionCookies } from '../_lib/management-auth.js';
+import { isTrustedOrigin } from '../_lib/session.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
@@ -14,16 +13,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({ error: 'Invalid request origin' });
   }
 
-  const sessionUser = getSessionUser(req);
-  if (!sessionUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+  const auth = await getManagementAuth(req, res);
 
-  if (sessionUser.id === 'environment-admin') {
-    return res.status(409).json({ message: 'This password is managed through encrypted Vercel environment variables.' });
+  if (auth.status !== 'authorized' || !auth.user) {
+    return res.status(auth.status === 'unauthorized' ? 403 : 401).json({ message: 'Unable to verify the management account.' });
   }
 
   const { currentPassword, newPassword } = req.body || {};
+
   if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
     return res.status(400).json({ message: 'Current and new passwords are required.' });
   }
@@ -32,39 +29,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ message: 'The new password must be at least 12 characters.' });
   }
 
+  if (currentPassword === newPassword) {
+    return res.status(400).json({ message: 'Choose a new password that differs from the current password.' });
+  }
+
   try {
-    const supabase = getSupabaseAdmin();
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, password_hash, is_active')
-      .eq('id', sessionUser.id)
-      .maybeSingle();
+    const authClient = createSupabaseAuthClient();
+    const verified = await authClient.auth.signInWithPassword({
+      email: auth.user.email,
+      password: currentPassword,
+    });
 
-    if (userError || !user?.is_active || !user.password_hash) {
-      return res.status(401).json({ message: 'Unable to verify the management account.' });
-    }
-
-    if (!await bcrypt.compare(currentPassword, user.password_hash)) {
+    if (verified.error || !verified.data.session) {
       return res.status(403).json({ message: 'The current password is incorrect.' });
     }
 
-    if (await bcrypt.compare(newPassword, user.password_hash)) {
-      return res.status(400).json({ message: 'Choose a new password that differs from the current password.' });
+    const updated = await authClient.auth.updateUser({ password: newPassword });
+
+    if (updated.error) {
+      return res.status(400).json({ message: 'Password update failed. Verify the password requirements and try again.' });
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 12);
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ password_hash: passwordHash })
-      .eq('id', sessionUser.id);
-
-    if (updateError) {
-      throw updateError;
-    }
-
+    setAuthSessionCookies(res, verified.data.session);
     return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Password update failed:', error instanceof Error ? error.message : 'Unknown error');
+  } catch {
     return res.status(500).json({ message: 'Password update failed. Please try again.' });
   }
 }

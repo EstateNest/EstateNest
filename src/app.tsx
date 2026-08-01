@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 
 const Login = lazy(() => import("./pages/management/Login"));
 const Dashboard = lazy(() => import("./pages/management/Dashboard"));
+const AccessDenied = lazy(() => import("./pages/management/AccessDenied"));
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/service-areas" element={<ServiceAreas />} />
           {/* Management CRM Routes */}
           <Route path="/management/login" element={<Login />} />
+          <Route path="/management/access-denied" element={<AccessDenied />} />
           <Route path="/management/*" element={<Dashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

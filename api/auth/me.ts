@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSessionUser } from '../_lib/session.js';
-import { getSupabaseAdmin } from '../_lib/supabase.js';
+import { getManagementAuth } from '../_lib/management-auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
@@ -9,39 +8,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const sessionUser = getSessionUser(req);
+  const auth = await getManagementAuth(req, res);
 
-  if (!sessionUser) {
+  if (auth.status === 'unauthenticated') {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  if (sessionUser.id !== 'environment-admin') {
-    try {
-      const { data: user } = await getSupabaseAdmin()
-        .from('users')
-        .select('id, username, email, role, first_name, last_name, is_active')
-        .eq('id', sessionUser.id)
-        .maybeSingle();
-
-      if (!user?.is_active) {
-        return res.status(401).json({ error: 'Account is no longer active' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: String(user.role).toUpperCase(),
-          firstName: user.first_name,
-          lastName: user.last_name,
-        },
-      });
-    } catch {
-      return res.status(503).json({ error: 'Unable to verify account' });
-    }
+  if (auth.status === 'unauthorized') {
+    return res.status(403).json({ error: 'Management access is not authorized' });
   }
 
-  return res.status(200).json({ success: true, user: sessionUser });
+  if (auth.status !== 'authorized' || !auth.user) {
+    return res.status(503).json({ error: 'Unable to verify account' });
+  }
+
+  return res.status(200).json({ success: true, user: auth.user });
 }

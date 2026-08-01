@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSessionUser, isTrustedOrigin, type SessionUser } from './_lib/session.js';
+import { getManagementAuth } from './_lib/management-auth.js';
+import { isTrustedOrigin, type SessionUser } from './_lib/session.js';
 import { getSupabaseAdmin } from './_lib/supabase.js';
 
 const LEAD_STATUSES = new Set([
@@ -64,7 +65,7 @@ function text(value: unknown, maximum = 1000): string | null {
 }
 
 function isAdmin(user: SessionUser): boolean {
-  return user.role.toUpperCase() === 'ADMIN';
+  return ['SUPER_ADMIN', 'ADMIN'].includes(user.role.toUpperCase());
 }
 
 function ensureAdmin(user: SessionUser, res: VercelResponse): boolean {
@@ -78,7 +79,7 @@ function ensureAdmin(user: SessionUser, res: VercelResponse): boolean {
 
 async function audit(user: SessionUser, action: string, entityType: string, entityId?: string, metadata?: Record<string, unknown>) {
   try {
-    const databaseUserId = user.id === 'environment-admin' ? null : user.id;
+    const databaseUserId = user.profileId || null;
     await getSupabaseAdmin().from('audit_log').insert({
       user_id: databaseUserId,
       action,
@@ -273,7 +274,7 @@ async function updateLead(req: VercelRequest, res: VercelResponse, user: Session
   if (updates.lead_status && current?.lead_status !== updates.lead_status) {
     await supabase.from('lead_activities').insert({
       lead_id: id,
-      user_id: user.id === 'environment-admin' ? null : user.id,
+      user_id: user.profileId || null,
       activity_type: 'STATUS_CHANGE',
       old_value: current?.lead_status || null,
       new_value: updates.lead_status,
@@ -415,7 +416,7 @@ async function handleCollection(req: VercelRequest, res: VercelResponse, user: S
         title,
         description: text(body.description, 5000),
         lead_id: text(body.leadId, 100),
-        assigned_to: user.id === 'environment-admin' ? null : user.id,
+        assigned_to: user.profileId || null,
         status: 'PENDING',
         priority: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'].includes(String(body.priority).toUpperCase()) ? String(body.priority).toUpperCase() : 'MEDIUM',
         due_date: text(body.dueDate, 100),
@@ -430,7 +431,7 @@ async function handleCollection(req: VercelRequest, res: VercelResponse, user: S
         duration_minutes: Math.min(Math.max(Number(body.durationMinutes) || 30, 15), 240),
         meeting_type: text(body.meetingType, 50) || 'PHONE',
         meeting_link: text(body.meetingLink, 500),
-        advisor_id: user.id === 'environment-admin' ? null : user.id,
+        advisor_id: user.profileId || null,
         status: 'SCHEDULED',
         notes: text(body.notes, 5000),
       };
@@ -443,7 +444,7 @@ async function handleCollection(req: VercelRequest, res: VercelResponse, user: S
         body: text(body.body, 20000),
         status: 'AI_GENERATED',
         source_agent: text(body.sourceAgent, 100) || 'MANUAL',
-        created_by: user.id === 'environment-admin' ? null : user.id,
+        created_by: user.profileId || null,
       };
     }
 
@@ -509,7 +510,7 @@ function getIntegrations(res: VercelResponse, user: SessionUser) {
       googleTagManager: true,
       microsoftClarity: true,
     },
-    user: { role: user.role, environmentManagedPassword: user.id === 'environment-admin' },
+    user: { role: user.role, environmentManagedPassword: false },
   });
 }
 
@@ -521,8 +522,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(204).end();
   }
 
-  const user = getSessionUser(req);
-  if (!user) return res.status(401).json({ message: 'Not authenticated' });
+  const auth = await getManagementAuth(req, res);
+  if (auth.status === 'unauthenticated') return res.status(401).json({ message: 'Not authenticated' });
+  if (auth.status === 'unauthorized') return res.status(403).json({ message: 'Management access is not authorized' });
+  if (auth.status !== 'authorized' || !auth.user) return res.status(503).json({ message: 'Management authentication is unavailable' });
+  const user = auth.user;
   if (req.method !== 'GET' && !isTrustedOrigin(req)) return res.status(403).json({ message: 'Invalid request origin' });
 
   const resource = queryValue(req, 'resource').toLowerCase();

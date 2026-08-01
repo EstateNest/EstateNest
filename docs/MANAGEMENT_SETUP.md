@@ -72,28 +72,19 @@ cp management.env.example .env.local
 Edit `.env.local` with your actual values:
 
 ```env
-# Supabase (REQUIRED)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+# Supabase Auth and server API (REQUIRED)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 SUPABASE_SECRET_KEY=your-secret-key
 
-# Authentication
-AUTH_SECRET=generate-with-openssl-rand-base64-32
-
-# Initial Admin User
-INITIAL_ADMIN_USERNAME=replace-with-private-admin-username
-INITIAL_ADMIN_EMAIL=replace-with-private-admin-email
-INITIAL_ADMIN_PASSWORD=replace-with-a-random-password-at-least-16-characters
-
-# Email (for lead notifications)
-RESEND_API_KEY=re_your_resend_api_key
+# Gmail lead notifications
+GMAIL_USER=hello@estatenest.ca
+GMAIL_APP_PASSWORD=configure-as-a-sensitive-vercel-variable
 ```
 
-### 2.5 Generate AUTH_SECRET
+### 2.5 Configure Supabase Management Authorization
 
-```bash
-openssl rand -base64 32
-```
+Apply `supabase/migrations/20260801163000_management_user_roles.sql` in the Supabase SQL Editor. Management credentials remain exclusively in Supabase Auth; never add passwords to this repository.
 
 ---
 

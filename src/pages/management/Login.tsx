@@ -9,7 +9,7 @@ import { Shield, AlertCircle, Loader2 } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +20,7 @@ const Login = () => {
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include' });
         if (active && response.ok) navigate('/management/dashboard', { replace: true });
+        if (active && response.status === 403) navigate('/management/access-denied', { replace: true });
       } catch {
         return;
       }
@@ -39,11 +40,16 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
         credentials: 'include',
       });
 
       const data = await response.json();
+
+      if (response.status === 403) {
+        navigate('/management/access-denied', { replace: true });
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
@@ -86,13 +92,13 @@ const Login = () => {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-slate-300">Username</Label>
+                <Label htmlFor="email" className="text-slate-300">Email</Label>
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="Username or email"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="you@estatenest.ca"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="username"
                   className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-500"

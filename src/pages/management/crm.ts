@@ -147,6 +147,11 @@ export async function crmRequest<T>(resource: string, options: CrmRequestOptions
     throw new Error('Your session has expired');
   }
 
+  if (response.status === 403) {
+    window.location.assign('/management/access-denied');
+    throw new Error('Management access is not authorized');
+  }
+
   if (!response.ok) {
     throw new Error(payload?.message || payload?.error || 'The management request failed');
   }

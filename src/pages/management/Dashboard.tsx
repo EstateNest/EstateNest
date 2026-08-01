@@ -1085,7 +1085,7 @@ const Dashboard = () => {
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include', headers: { Accept: 'application/json' } });
         if (!response.ok) {
-          navigate('/management/login', { replace: true });
+          navigate(response.status === 403 ? '/management/access-denied' : '/management/login', { replace: true });
           return;
         }
         const payload = await response.json();
