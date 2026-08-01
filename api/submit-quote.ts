@@ -22,6 +22,21 @@ interface ValidationError {
   message: string;
 }
 
+const DEFAULT_NOTIFICATION_RECIPIENTS = ['hello@estatenest.ca', 'kanwar@estatenest.ca'];
+
+function getNotificationRecipients(): string[] {
+  const configuredRecipients = [
+    process.env.LEAD_NOTIFICATION_EMAIL_1,
+    process.env.LEAD_NOTIFICATION_EMAIL_2,
+  ]
+    .map((email) => email?.trim())
+    .filter((email): email is string => Boolean(email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)));
+
+  return configuredRecipients.length > 0
+    ? Array.from(new Set(configuredRecipients))
+    : DEFAULT_NOTIFICATION_RECIPIENTS;
+}
+
 function validateFormData(data: QuoteFormData): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -284,7 +299,7 @@ async function sendViaGmail(
   try {
     await transporter.sendMail({
       from: `"Estate Nest" <${gmailUser}>`,
-      to: ['hello@estatenest.ca', 'kanwar@estatenest.ca'],
+      to: getNotificationRecipients(),
       subject: `🏠 New Quote Request from ${data.firstName} ${data.lastName} - ${data.insuranceType}`,
       html: emailHtml,
       replyTo: data.email,
@@ -315,7 +330,7 @@ async function sendViaResend(
       },
       body: JSON.stringify({
         from: 'Estate Nest <onboarding@resend.dev>',
-        to: ['hello@estatenest.ca', 'kanwar@estatenest.ca'],
+        to: getNotificationRecipients(),
         subject: `🏠 New Quote Request from ${data.firstName} ${data.lastName} - ${data.insuranceType}`,
         html: emailHtml,
         reply_to: data.email,

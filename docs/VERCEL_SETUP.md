@@ -12,14 +12,19 @@ Click **Environment Variables** and add each of these:
 
 | Name | Value | Environments |
 |------|-------|--------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxx.supabase.co` | Production, Preview, Development |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` | Production, Preview, Development |
+| `SUPABASE_URL` | `https://xxxx.supabase.co` | Production |
 | `SUPABASE_SECRET_KEY` | `sb_secret_...` | **Production only** (sensitive) |
 | `AUTH_SECRET` | Generate below | Production, Preview |
-| `RESEND_API_KEY` | `re_...` | Production |
+| `GMAIL_USER` | Gmail sender address | Production |
+| `GMAIL_APP_PASSWORD` | Google app password | **Production only** (sensitive) |
+| `RESEND_API_KEY` | `re_...` | Production (optional fallback) |
 | `LEAD_NOTIFICATION_EMAIL_1` | `hello@estatenest.ca` | Production |
 | `LEAD_NOTIFICATION_EMAIL_2` | `kanwar@estatenest.ca` | Production |
 | `ALLOWED_ORIGINS` | `https://www.estatenest.ca,https://estatenest.ca` | Production |
+
+The public website is a Vite application. Browser code only receives variables explicitly referenced as `import.meta.env.VITE_*`; never use that prefix for passwords, Supabase secret keys, authentication secrets, or email credentials. The current frontend does not require any `VITE_*` variables because it calls same-origin `/api` routes and loads the public analytics IDs from `public/analytics.js`.
+
+Preview deployments intentionally do not receive the Production Supabase secret. Configure a separate staging Supabase project before enabling CRM or quote persistence in Preview.
 
 ### 3. Generate AUTH_SECRET
 Run this command on your computer:
