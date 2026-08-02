@@ -64,6 +64,16 @@ const Privacy = () => {
             </section>
 
             <section>
+              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">Chatbot Enquiries, Consent & Retention</h2>
+              <p>
+                If you choose to use the Estate Nest Insurance Assistant, we collect your consent decision, name, phone number, email address, broad insurance interests, source page, limited campaign attribution, and session timestamps to create or update a prospect record and arrange advisor follow-up. Enquiry consent and optional marketing consent are recorded separately; marketing consent is not required to use the assistant.
+              </p>
+              <p className="mt-4">
+                The first release uses a versioned, deterministic FAQ library and does not store a raw chat transcript. Do not enter medical, banking, payment, password, government-identification, or other sensitive information. Chatbot session metadata is retained for a configurable period that currently defaults to 180 days, subject to legitimate legal, regulatory, security, and record-management requirements. Contact hello@estatenest.ca to request access, correction, or deletion where applicable.
+              </p>
+            </section>
+
+            <section>
               <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">6. Cybersecurity Safeguards & Limitation of Liability</h2>
               <p>
                 We implement robust administrative, physical, and technical security controls (including active SSL encryption, network firewalls, and isolated database architectures) to secure your information. However, no data transmission over the internet or electronic storage infrastructure is 100% secure.

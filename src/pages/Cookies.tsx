@@ -47,6 +47,9 @@ const Cookies = () => {
               <p>
                 These are vital for basic operations. They manage secure logins, maintain session stability, and allow you to fill out multi-page financial health assessments without losing data between clicks. The website cannot function without them, and they do not require prior consumer consent under Canadian privacy frameworks.
               </p>
+              <p className="mt-4">
+                The public insurance assistant uses an HttpOnly same-site session cookie for up to 24 hours after you agree to begin. If you choose to continue to the quote form, a separate one-purpose HttpOnly handoff cookie securely prefills the form and expires after approximately 20 minutes or when the quote is submitted. These cookie values contain opaque random tokens, not your name, phone number, email address, or insurance interest.
+              </p>
 
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Functional / Preference Cookies</h3>
               <p>
@@ -56,6 +59,9 @@ const Cookies = () => {
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Analytics & Performance Cookies</h3>
               <p>
                 These cookies gather completely anonymized telemetry regarding how visitors interact with our layout (e.g., identifying which blog posts or policy descriptions are read most frequently).
+              </p>
+              <p className="mt-4">
+                Chatbot analytics are limited to interaction events such as opening, consent, product selection, quote handoff, completion, or abandonment. Name, email, phone number, raw questions, health information, and other personal identifiers are not approved analytics parameters. Chatbot contact fields are marked for Microsoft Clarity masking.
               </p>
 
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Targeting & Marketing Tracking Pixels</h3>

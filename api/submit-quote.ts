@@ -1,5 +1,11 @@
 import { createHash } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import {
+  CHATBOT_HANDOFF_COOKIE,
+  clearPrivateCookie,
+  hashOpaqueToken,
+  readCookie,
+} from './_lib/chatbot-security.js';
 import { getLeadNotificationRecipients, sendGmailMessage } from './_lib/gmail.js';
 import { isTrustedOrigin } from './_lib/session.js';
 import { getSupabaseAdmin } from './_lib/supabase.js';
@@ -112,11 +118,11 @@ function requestValue(req: VercelRequest, header: string): string {
   return (Array.isArray(value) ? value[0] : value || '').slice(0, 1000);
 }
 
-function quoteDedupeKey(data: QuoteFormData, interest: string): string {
+function quoteDedupeKey(data: QuoteFormData, interest: string, handoffHash = ''): string {
   const dateBucket = new Date().toISOString().slice(0, 10);
   const email = data.email.trim().toLowerCase();
   const phone = data.phone.replace(/\D/g, '');
-  return createHash('sha256').update(`${email}|${phone}|${interest}|${dateBucket}`).digest('hex');
+  return createHash('sha256').update(`${email}|${phone}|${interest}|${dateBucket}|${handoffHash}`).digest('hex');
 }
 
 function secureCrmBaseUrl(): string {
@@ -236,9 +242,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const recipients = getLeadNotificationRecipients();
   const forwardedFor = requestValue(req, 'x-forwarded-for');
   const ipAddress = forwardedFor.split(',')[0]?.trim().slice(0, 45) || null;
+  const handoffToken = readCookie(req, CHATBOT_HANDOFF_COOKIE);
+  const handoffHash = handoffToken ? hashOpaqueToken(handoffToken) : '';
+  const submissionKey = quoteDedupeKey(sanitized, insuranceInterest, handoffHash);
 
   try {
-    const { data: acceptedData, error } = await getSupabaseAdmin().rpc('accept_quote_lead', {
+    const commonParameters = {
       p_first_name: sanitized.firstName,
       p_last_name: sanitized.lastName,
       p_email: sanitized.email,
@@ -250,16 +259,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       p_ready_to_proceed: sanitized.readyToProceed,
       p_smoking_disclosed: sanitized.smokingHistory === 'yes',
       p_medical_disclosed: sanitized.medicalHistory === 'yes',
-      p_dedupe_key: quoteDedupeKey(sanitized, insuranceInterest),
       p_referring_url: requestValue(req, 'referer') || null,
       p_ip_address: ipAddress,
       p_user_agent: requestValue(req, 'user-agent'),
       p_notification_recipients: recipients,
-    });
+    };
+    const { data: acceptedData, error } = handoffHash
+      ? await getSupabaseAdmin().rpc('accept_chatbot_quote_lead', {
+          p_handoff_token_hash: handoffHash,
+          p_submission_key: submissionKey,
+          ...commonParameters,
+        })
+      : await getSupabaseAdmin().rpc('accept_quote_lead', {
+          p_dedupe_key: submissionKey,
+          ...commonParameters,
+        });
 
     const accepted = (Array.isArray(acceptedData) ? acceptedData[0] : acceptedData) as AcceptedQuote | null;
     if (error || !accepted?.lead_id || !accepted.lead_public_id) {
-      console.error('Quote acceptance transaction failed');
+      if (handoffToken && String(error?.message || '').includes('chatbot_')) {
+        clearPrivateCookie(res, CHATBOT_HANDOFF_COOKIE);
+        return res.status(410).json({
+          success: false,
+          message: 'The secure chatbot handoff expired before submission. Please restart the chat or contact Estate Nest so we can preserve the correct prospect record.',
+        });
+      }
+      console.error('Quote acceptance transaction failed', {
+        code: String(error?.code || 'UNCLASSIFIED').slice(0, 80),
+        message: String(error?.message || '').slice(0, 240),
+      });
       return res.status(503).json({
         success: false,
         message: 'We could not securely accept the quote request. Please try again or contact hello@estatenest.ca.',
@@ -278,12 +306,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await recordNotificationResult(accepted.notification_id, emailResult);
     }
 
+    if (handoffToken) clearPrivateCookie(res, CHATBOT_HANDOFF_COOKIE);
+
     return res.status(200).json({
       success: true,
       accepted: true,
       leadReference: accepted.lead_public_id,
       duplicate: accepted.duplicate,
-      message: 'Your quote request has been securely accepted. We will contact you within 24 hours.',
+      chatbotLinked: Boolean(handoffToken),
+      message: 'Your quote request has been securely accepted. A licensed advisor will follow up as soon as reasonably possible, generally within one business day.',
     });
   } catch {
     console.error('Quote acceptance service unavailable');

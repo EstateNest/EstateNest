@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import ChatBot from "@/components/ChatBot";
 import { toast } from "@/hooks/use-toast";
 import { Shield, CheckCircle } from "lucide-react";
+import { CHATBOT_DISCLAIMER } from "@/content/chatbotContent";
+import { trackChatbotEvent } from "@/lib/chatbotAnalytics";
 
 type AnalyticsWindow = Window & {
   gtag?: (command: string, eventName: string, parameters: Record<string, string>) => void;
@@ -44,6 +45,7 @@ const Quote = () => {
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [submissionConfirmed, setSubmissionConfirmed] = useState(false);
   const [submissionConfirmation, setSubmissionConfirmation] = useState<{ message: string; leadReference?: string } | null>(null);
+  const [chatbotPrefilled, setChatbotPrefilled] = useState(false);
   const updateFormField = (field: keyof typeof formData, value: string) => {
     setFormData((current) => ({ ...current, [field]: value }));
   };
@@ -61,6 +63,36 @@ const Quote = () => {
     "Segregated Funds (RESP)",
     "Other",
   ];
+
+  useEffect(() => {
+    let active = true;
+    const loadSecureHandoff = async () => {
+      try {
+        const response = await fetch('/api/chatbot?action=handoff', {
+          method: 'GET',
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json' },
+        });
+        if (!response.ok) return;
+        const result = await response.json() as { success?: boolean; prefill?: Partial<typeof formData> };
+        if (!active || !result.success || !result.prefill) return;
+        setFormData((current) => ({
+          ...current,
+          firstName: String(result.prefill?.firstName || current.firstName),
+          lastName: String(result.prefill?.lastName || current.lastName),
+          email: String(result.prefill?.email || current.email),
+          phone: String(result.prefill?.phone || current.phone),
+          province: String(result.prefill?.province || current.province),
+          insuranceType: String(result.prefill?.insuranceType || current.insuranceType),
+        }));
+        setChatbotPrefilled(true);
+      } catch {
+        setChatbotPrefilled(false);
+      }
+    };
+    void loadSecureHandoff();
+    return () => { active = false; };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,8 +190,9 @@ const Quote = () => {
               insurance_type: formData.insuranceType
             });
           }
-          // Console log for debugging (remove in production if not needed)
-          console.log('[Analytics] Quote request submitted successfully');
+        }
+        if (result.chatbotLinked) {
+          trackChatbotEvent("chatbot_quote_completed", { step: "quote_submitted" });
         }
 
         toast({
@@ -186,6 +219,7 @@ const Quote = () => {
         });
         setAcceptedPrivacy(false);
         setSubmissionConfirmed(false);
+        setChatbotPrefilled(false);
       } else {
         toast({
           title: "Submission Failed",
@@ -208,7 +242,6 @@ const Quote = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle font-[Inter]">
       <Navigation />
-      <ChatBot />
 
       <section className="pt-32 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -264,6 +297,13 @@ const Quote = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {chatbotPrefilled && (
+                <div role="status" aria-live="polite" data-testid="chatbot-prefill-notice" className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-foreground">
+                  <p className="font-semibold">Secure chatbot handoff received</p>
+                  <p className="mt-1 leading-relaxed">Your contact details and broad insurance interest were transferred without placing personal information in the URL. Review and edit every field before submitting.</p>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{CHATBOT_DISCLAIMER}</p>
+                </div>
+              )}
               {submissionConfirmation && (
                 <div role="status" aria-live="polite" data-testid="quote-accepted" className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
                   <p className="font-semibold">Quote Request Submitted!</p>
@@ -271,7 +311,7 @@ const Quote = () => {
                   {submissionConfirmation.leadReference && <p className="mt-2 text-xs font-medium">Reference: {submissionConfirmation.leadReference}</p>}
                 </div>
               )}
-              <form onSubmit={handleSubmit} noValidate className="space-y-6">
+              <form onSubmit={handleSubmit} noValidate data-clarity-mask="true" className="space-y-6">
                 {/* Personal Information */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">

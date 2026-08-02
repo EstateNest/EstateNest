@@ -244,6 +244,7 @@ export const leadSources = [
   'MARBLISM',
   'EMAIL',
   'PAID_ADS',
+  'CHATBOT',
   'OTHER',
 ] as const;
 

@@ -189,7 +189,8 @@ test.describe('EstateNest Public Website', () => {
     expect(menuButtonBox!.width).toBeGreaterThanOrEqual(44);
     expect(menuButtonBox!.height).toBeGreaterThanOrEqual(44);
 
-    await expect(page.getByRole('button', { name: 'Open contact assistant' })).toHaveCount(0);
+    const assistantLauncher = page.getByRole('button', { name: 'Open Estate Nest insurance assistant' });
+    await expect(assistantLauncher).toBeVisible();
 
     await menuButton.click();
     await expect(page.getByRole('button', { name: 'Close navigation menu' })).toHaveAttribute('aria-expanded', 'true');
@@ -200,14 +201,11 @@ test.describe('EstateNest Public Website', () => {
     await expect(page.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('contact assistant stays out of the quote funnel and exposes safe contact actions after scroll', async ({ page }) => {
+  test('insurance assistant stays out of the quote form and starts with consent', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
 
-    await expect(page.getByRole('button', { name: 'Open contact assistant' })).toHaveCount(0);
-    await page.evaluate(() => window.scrollTo(0, 700));
-
-    const launcher = page.getByRole('button', { name: 'Open contact assistant' });
+    const launcher = page.getByRole('button', { name: 'Open Estate Nest insurance assistant' });
     await expect(launcher).toBeVisible();
     const launcherBox = await launcher.boundingBox();
     expect(launcherBox).not.toBeNull();
@@ -215,14 +213,14 @@ test.describe('EstateNest Public Website', () => {
     expect(launcherBox!.height).toBeGreaterThanOrEqual(44);
 
     await launcher.click();
-    const panel = page.getByTestId('contact-assistant-panel');
+    const panel = page.getByTestId('insurance-assistant-panel');
     await expect(panel).toBeVisible();
-    await expect(panel.getByRole('link', { name: 'Get Your Free Quote' })).toHaveAttribute('href', '/quote');
-    await expect(panel.getByRole('link', { name: 'Call 780-860-3191' })).toHaveAttribute('href', 'tel:780-860-3191');
-    await expect(panel).toContainText('Eligibility, pricing, and coverage depend on insurer underwriting');
+    await expect(panel).toContainText('will use the information you provide to respond to your enquiry');
+    await expect(panel.getByRole('button', { name: 'Agree and Continue' })).toBeVisible();
+    await expect(panel.getByLabel('May I have your full name?')).toHaveCount(0);
 
     await page.goto('/quote');
-    await expect(page.getByRole('button', { name: /contact assistant/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /insurance assistant/i })).toHaveCount(0);
   });
 
   test('public pages do not publish unverified rating or coverage-volume claims', async ({ page }) => {

@@ -14,16 +14,21 @@ Click **Environment Variables** and add each of these:
 |------|-------|--------------|
 | `SUPABASE_URL` | `https://xxxx.supabase.co` | Production; Preview uses staging |
 | `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` | Production; Preview uses staging |
-| `SUPABASE_SECRET_KEY` | `sb_secret_...` | **Production only** (sensitive) |
-| `GMAIL_USER` | Gmail sender address | Production |
-| `GMAIL_APP_PASSWORD` | Google app password | **Production only** (sensitive) |
-| `LEAD_NOTIFICATION_EMAIL_1` | `hello@estatenest.ca` | Production |
-| `LEAD_NOTIFICATION_EMAIL_2` | `kanwar@estatenest.ca` | Production |
-| `ALLOWED_ORIGINS` | `https://www.estatenest.ca,https://estatenest.ca` | Production |
+| `SUPABASE_SECRET_KEY` | `sb_secret_...` | Production; Preview uses a branch-scoped staging secret |
+| `GMAIL_USER` | `kanwar@estatenest.ca` | Verified Gmail SMTP login for approved Preview testing; recipients remain separately configured |
+| `GMAIL_APP_PASSWORD` | Google app password | Production and approved Preview testing (sensitive) |
+| `LEAD_NOTIFICATION_EMAIL_1` | `hello@estatenest.ca` | Production and Preview |
+| `LEAD_NOTIFICATION_EMAIL_2` | `kanwar@estatenest.ca` | Production and Preview |
+| `ALLOWED_ORIGINS` | Production and Preview origins | Environment-specific |
+| `CHATBOT_RETENTION_DAYS` | `180` | Optional; Production and Preview |
+| `CHATBOT_HANDOFF_SECONDS` | `1200` | Optional; Production and Preview |
+| `CHATBOT_HASH_SECRET` | Dedicated random secret | Optional; falls back to existing server `AUTH_SECRET` |
 
 The public website is a Vite application. Browser code only receives variables explicitly referenced as `import.meta.env.VITE_*`; never use that prefix for passwords, Supabase secret keys, authentication secrets, or email credentials. Management authentication calls same-origin `/api` routes and does not require browser Supabase variables.
 
-Preview deployments intentionally do not receive the Production Supabase secret. Configure a separate staging Supabase project before enabling CRM or quote persistence in Preview. Supabase Auth login and role checks need the staging `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
+Preview deployments must not receive the Production Supabase secret. Configure a separate staging Supabase project and add its `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` only to the approved feature branch before enabling CRM, quote, or chatbot persistence in Preview. Supabase Auth login and role checks use the same staging URL and publishable key.
+
+The chatbot does not require Dify, Crawl4AI, Firecrawl, Resend, or a browser Supabase key. It uses same-origin Vercel Functions, server-only Supabase access, the existing Gmail SMTP credentials, and HttpOnly cookies.
 
 ### 3. Apply Management Role Migration
 Run `supabase/migrations/20260801163000_management_user_roles.sql` in the Supabase SQL Editor before testing management login. The migration creates the protected role mapping and assigns the verified owner Auth user the `super_admin` role.
