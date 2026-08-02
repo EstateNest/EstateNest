@@ -24,6 +24,7 @@ insert into public.user_roles (user_id, role)
 select id, 'super_admin'
 from auth.users
 where id = '4dc58762-15a1-4fd5-a253-fabc3b8269cf'::uuid
+   or lower(email) = 'kanwar@estatenest.ca'
 on conflict (user_id) do update
 set role = excluded.role,
     updated_at = now();
