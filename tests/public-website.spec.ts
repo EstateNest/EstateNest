@@ -189,19 +189,7 @@ test.describe('EstateNest Public Website', () => {
     expect(menuButtonBox!.width).toBeGreaterThanOrEqual(44);
     expect(menuButtonBox!.height).toBeGreaterThanOrEqual(44);
 
-    const chatButton = page.getByRole('button', { name: 'Open chat' });
-    const phoneLink = page.getByTestId('homepage-hero-phone');
-    const chatButtonBox = await chatButton.boundingBox();
-    const phoneLinkBox = await phoneLink.boundingBox();
-    expect(chatButtonBox).not.toBeNull();
-    expect(phoneLinkBox).not.toBeNull();
-    const chatOverlapsPhone = !(
-      chatButtonBox!.x + chatButtonBox!.width <= phoneLinkBox!.x
-      || chatButtonBox!.x >= phoneLinkBox!.x + phoneLinkBox!.width
-      || chatButtonBox!.y + chatButtonBox!.height <= phoneLinkBox!.y
-      || chatButtonBox!.y >= phoneLinkBox!.y + phoneLinkBox!.height
-    );
-    expect(chatOverlapsPhone).toBe(false);
+    await expect(page.getByRole('button', { name: 'Open contact assistant' })).toHaveCount(0);
 
     await menuButton.click();
     await expect(page.getByRole('button', { name: 'Close navigation menu' })).toHaveAttribute('aria-expanded', 'true');
@@ -210,6 +198,42 @@ test.describe('EstateNest Public Website', () => {
 
     await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: 'Open navigation menu' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('contact assistant stays out of the quote funnel and exposes safe contact actions after scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+
+    await expect(page.getByRole('button', { name: 'Open contact assistant' })).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, 700));
+
+    const launcher = page.getByRole('button', { name: 'Open contact assistant' });
+    await expect(launcher).toBeVisible();
+    const launcherBox = await launcher.boundingBox();
+    expect(launcherBox).not.toBeNull();
+    expect(launcherBox!.width).toBeGreaterThanOrEqual(44);
+    expect(launcherBox!.height).toBeGreaterThanOrEqual(44);
+
+    await launcher.click();
+    const panel = page.getByTestId('contact-assistant-panel');
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole('link', { name: 'Get Your Free Quote' })).toHaveAttribute('href', '/quote');
+    await expect(panel.getByRole('link', { name: 'Call 780-860-3191' })).toHaveAttribute('href', 'tel:780-860-3191');
+    await expect(panel).toContainText('Eligibility, pricing, and coverage depend on insurer underwriting');
+
+    await page.goto('/quote');
+    await expect(page.getByRole('button', { name: /contact assistant/i })).toHaveCount(0);
+  });
+
+  test('public pages do not publish unverified rating or coverage-volume claims', async ({ page }) => {
+    for (const path of ['/', '/about', '/quote']) {
+      await page.goto(path);
+      await expect(page.locator('body')).not.toContainText('$50M+');
+      await expect(page.locator('body')).not.toContainText('47 Reviews');
+    }
+
+    const structuredData = await page.locator('script[type="application/ld+json"]').allTextContents();
+    expect(structuredData.join('\n')).not.toContain('aggregateRating');
   });
 });
 

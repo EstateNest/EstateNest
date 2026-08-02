@@ -29,9 +29,9 @@ const Login = () => {
     const checkExistingSession = async () => {
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include' });
-        const payload = await response.json().catch(() => ({}));
+        const payload = await response.json().catch(() => ({})) as { code?: string; user?: unknown };
         if (!active) return;
-        if (response.ok) navigate('/management/dashboard', { replace: true });
+        if (response.ok && payload.user) navigate('/management/dashboard', { replace: true });
         else if (response.status === 403) navigate('/management/access-denied', { replace: true });
         else if (payload.code === 'MFA_REQUIRED') setStep('mfa');
         else if (payload.code === 'MFA_ENROLLMENT_REQUIRED') setStep('enroll');

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
-import { Shield, Users, Award, Target, Heart, TrendingUp, CheckCircle, ArrowRight, MapPin, Mail, Phone } from "lucide-react";
+import { Shield, Users, Award, Target, Heart, CheckCircle, ArrowRight, MapPin, Mail, Phone } from "lucide-react";
 
 const About = () => {
   const values = [
@@ -25,25 +25,25 @@ const About = () => {
     },
     {
       icon: Target,
-      title: "Results-Driven",
-      description: "Over $50M in coverage placed, protecting families across Alberta and Ontario.",
+      title: "Needs-Based Guidance",
+      description: "We begin with your goals and explain suitable next steps in clear language.",
     },
   ];
 
   const stats = [
-    { label: "Google Rating", value: "5.0 ★", icon: Award },
-    { label: "Families Protected", value: "Serving All", icon: Users },
-    { label: "Coverage Placed", value: "$50M+", icon: TrendingUp },
-    { label: "Client Reviews", value: "47", icon: Heart },
+    { label: "Service Areas", value: "AB & ON", icon: MapPin },
+    { label: "Approach", value: "Needs-Based", icon: Target },
+    { label: "Consultation", value: "No Obligation", icon: Heart },
+    { label: "Support", value: "Human-Led", icon: Users },
   ];
 
   const whyChooseUs = [
-    "Fully licensed and insured in Alberta and Ontario",
-    "E&O Insurance coverage for your complete protection",
+    "Licensed advisors serving Alberta and Ontario",
+    "Professional E&O insurance coverage",
     "Personalized insurance solutions tailored to your family",
-    "Fast approval process with competitive rates",
+    "Guidance through the application and underwriting process",
     "No-obligation free consultations and quotes",
-    "Comprehensive product portfolio from leading insurers",
+    "Product options reviewed against your stated needs",
     "Ongoing support and policy reviews",
     "Transparent, honest advice you can trust",
   ];
@@ -62,7 +62,7 @@ const About = () => {
           <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-in-up">
             <h1 className="text-5xl md:text-6xl font-bold">About Estate Nest</h1>
             <p className="text-xl text-primary-foreground/90">
-              Protecting Canadian families with comprehensive insurance solutions since 2008
+              Insurance and financial-protection guidance for families in Alberta and Ontario
             </p>
           </div>
         </div>
@@ -89,7 +89,7 @@ const About = () => {
                 With licenses in both Alberta and Ontario, we serve families across Canada with a wide range of insurance and financial products. Our team of experienced advisors takes the time to understand your unique situation, goals, and concerns before recommending solutions.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                We're proud to be E&O insured, demonstrating our commitment to professional standards and client protection. With over $50 million in coverage placed and families protected across Alberta and Ontario, we've established ourselves as a trusted partner in financial security.
+                We maintain professional E&O coverage and focus on clear, needs-based guidance. Our role is to help clients understand available options, application steps, and the questions an insurer may consider during underwriting.
               </p>
             </div>
 
@@ -103,7 +103,7 @@ const About = () => {
                 >
                   <CardContent className="p-6">
                     <stat.icon className="w-10 h-10 text-primary mx-auto mb-3" />
-                    <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
+                    <div className="mb-1 text-2xl font-bold text-foreground md:text-3xl">{stat.value}</div>
                     <div className="text-sm text-muted-foreground">{stat.label}</div>
                   </CardContent>
                 </Card>

@@ -24,7 +24,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Protecting families with comprehensive insurance solutions. Licensed & insured in Alberta and Ontario.
+              Insurance and financial-protection guidance for families in Alberta and Ontario.
             </p>
             <div className="flex items-center space-x-2 text-sm">
               <div aria-hidden="true" className="w-2 h-2 bg-accent rounded-full animate-pulse" />
@@ -33,11 +33,11 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span>Families Protected in AB & ON</span>
+                <span>Serving families across AB & ON</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span>$50M+ Coverage Placed</span>
+                <span>Needs-based insurance guidance</span>
               </li>
             </ul>
             {/* Contact Info - Match Header */}

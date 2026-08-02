@@ -162,11 +162,14 @@ test.describe('Public quote acceptance', () => {
     await page.getByRole('option', { name: 'No', exact: true }).click();
     await page.getByLabel('Type of Insurance *').click();
     await page.getByRole('option', { name: 'Life Insurance', exact: true }).click();
-    await page.getByLabel('Coverage Amount Needed *').fill('$500,000');
+    const coverageAmount = page.getByLabel('Coverage Amount Needed *');
+    await coverageAmount.click();
+    await coverageAmount.pressSequentially('500000');
+    await expect(coverageAmount).toHaveValue('500000');
     await page.getByLabel('Are You Ready to Proceed? *').click();
     await page.getByRole('option', { name: "Yes, I'm ready" }).click();
     await page.getByText('I agree to the privacy policy').click();
-    await page.getByText('I am not a robot').click();
+    await page.getByText('I confirm the information above is accurate').click();
     await expect(page.getByTestId('quote-accepted')).toHaveCount(0);
     await page.getByRole('button', { name: 'Get My Quote' }).click();
     await expect.poll(() => acceptedPayload).not.toBeNull();
@@ -174,6 +177,41 @@ test.describe('Public quote acceptance', () => {
     releaseAcceptance?.();
     await expect(page.getByTestId('quote-accepted')).toContainText('ENL-20260801-ABCD1234');
     expect(acceptedPayload).toMatchObject({ email: 'avery@example.test', province: 'AB', insuranceType: 'Life Insurance' });
+  });
+
+  test('a visitor requesting more information is still accepted as a lead', async ({ page }) => {
+    let acceptedPayload: Record<string, unknown> | null = null;
+    await page.route('**/api/submit-quote', async (route) => {
+      acceptedPayload = route.request().postDataJSON() as Record<string, unknown>;
+      await fulfillJson(route, { success: true, accepted: true, leadReference: 'ENL-20260801-FOLLOWUP1', message: 'Your quote request has been securely accepted.' });
+    });
+
+    await page.goto('/quote');
+    await page.getByLabel('First Name *').fill('Morgan');
+    await page.getByLabel('Last Name *').fill('Lee');
+    await page.getByLabel('Email Address *').fill('morgan@example.test');
+    await page.getByLabel('Phone Number *').fill('780-555-0120');
+    await page.getByLabel('Province *').click();
+    await page.getByRole('option', { name: 'Alberta' }).click();
+    await page.getByLabel('Smoking History *').click();
+    await page.getByRole('option', { name: 'No', exact: true }).click();
+    await page.getByLabel('Medical History *').click();
+    await page.getByRole('option', { name: 'No', exact: true }).click();
+    await page.getByLabel('Type of Insurance *').click();
+    await page.getByRole('option', { name: 'Life Insurance', exact: true }).click();
+    const coverageAmount = page.getByLabel('Coverage Amount Needed *');
+    await coverageAmount.click();
+    await coverageAmount.pressSequentially('250000');
+    await expect(coverageAmount).toHaveValue('250000');
+    await page.getByLabel('Are You Ready to Proceed? *').click();
+    await page.getByRole('option', { name: 'No, I need more information' }).click();
+    await page.getByText('I agree to the Privacy Policy').click();
+    await page.getByText('I confirm the information above is accurate').click();
+    await page.getByRole('button', { name: 'Get My Quote' }).click();
+
+    await expect(page).toHaveURL(/\/quote$/);
+    await expect(page.getByTestId('quote-accepted')).toContainText('ENL-20260801-FOLLOWUP1');
+    expect(acceptedPayload).toMatchObject({ email: 'morgan@example.test', readyToProceed: 'no' });
   });
 });
 

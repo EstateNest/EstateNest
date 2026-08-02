@@ -1,144 +1,121 @@
-import { useState } from "react";
-import { MessageCircle, X, Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, CircleHelp, Mail, MessageCircle, Phone, X } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 const ChatBot = () => {
+  const location = useLocation();
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const primaryActionRef = useRef<HTMLAnchorElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      type: "bot",
-      text: "Hi! I'm here to help you find the perfect insurance solution. How can I assist you today?",
-    },
-  ]);
-  const [input, setInput] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
+  const isQuotePage = location.pathname === "/quote";
 
-  const quickReplies = [
-    "Get a Quote",
-    "Schedule Appointment",
-    "Learn About Life Insurance",
-    "Contact Agent",
-  ];
+  useEffect(() => {
+    setIsOpen(false);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+    if (isQuotePage) {
+      setIsVisible(false);
+      return;
+    }
 
-    setMessages([...messages, { type: "user", text: input }]);
-    
-    // Simulate bot response
-    setTimeout(() => {
-      let botResponse = "I'd be happy to help! ";
-      
-      if (input.toLowerCase().includes("quote")) {
-        botResponse += "To get a personalized quote, please visit our quote page or call us at 780-860-3191.";
-      } else if (input.toLowerCase().includes("appointment")) {
-        botResponse += "You can schedule an appointment on our quote page. Would you like me to direct you there?";
-      } else {
-        botResponse += "For detailed information, our team is ready to assist. Call 780-860-3191 or email hello@estatenest.ca.";
-      }
-      
-      setMessages((prev) => [...prev, { type: "bot", text: botResponse }]);
-    }, 800);
+    const updateVisibility = () => {
+      const threshold = window.innerWidth < 640 ? 420 : 180;
+      setIsVisible(window.scrollY >= threshold);
+    };
 
-    setInput("");
-  };
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    window.addEventListener("resize", updateVisibility);
 
-  const handleQuickReply = (reply: string) => {
-    setInput(reply);
-    handleSend();
-  };
+    return () => {
+      window.removeEventListener("scroll", updateVisibility);
+      window.removeEventListener("resize", updateVisibility);
+    };
+  }, [isQuotePage, location.pathname]);
+
+  useEffect(() => {
+    if (!isVisible) setIsOpen(false);
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    primaryActionRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setIsOpen(false);
+      launcherRef.current?.focus();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
+  if (isQuotePage || !isVisible) return null;
 
   return (
     <>
-      {/* Chat Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={launcherRef}
+        onClick={() => setIsOpen((current) => !current)}
         type="button"
-        aria-label={isOpen ? "Close chat" : "Open chat"}
+        aria-label={isOpen ? "Close contact assistant" : "Open contact assistant"}
         aria-expanded={isOpen}
-        aria-controls="estate-nest-chat"
-        className="fixed bottom-1 right-3 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent shadow-glow transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-6 sm:right-6 sm:h-14 sm:w-14"
+        aria-controls="estate-nest-contact-assistant"
+        className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent shadow-glow transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none sm:bottom-6 sm:right-6 sm:h-14 sm:w-14"
       >
         {isOpen ? (
-          <X aria-hidden="true" className="w-6 h-6 text-accent-foreground" />
+          <X aria-hidden="true" className="h-6 w-6 text-accent-foreground" />
         ) : (
-          <MessageCircle aria-hidden="true" className="w-6 h-6 text-accent-foreground" />
+          <MessageCircle aria-hidden="true" className="h-6 w-6 text-accent-foreground" />
         )}
       </button>
 
-      {/* Chat Window */}
       {isOpen && (
-        <div id="estate-nest-chat" className="fixed bottom-20 right-4 z-50 flex h-[500px] w-96 max-w-[calc(100vw-2rem)] flex-col rounded-2xl border border-border bg-card shadow-elegant animate-scale-in sm:bottom-24 sm:right-6 sm:max-w-[calc(100vw-3rem)]">
-          {/* Header */}
-          <div className="bg-gradient-primary text-primary-foreground p-4 rounded-t-2xl">
-            <h3 className="font-semibold">Estate Nest Assistant</h3>
-            <p className="text-xs text-primary-foreground/80">
-              We typically reply instantly
+        <section
+          id="estate-nest-contact-assistant"
+          data-testid="contact-assistant-panel"
+          aria-label="Estate Nest contact options"
+          className="fixed bottom-20 right-3 z-50 w-[calc(100vw-1.5rem)] max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-elegant animate-scale-in motion-reduce:animate-none sm:bottom-24 sm:right-6"
+        >
+          <div className="bg-gradient-primary p-5 text-primary-foreground">
+            <h2 className="text-lg font-semibold">How can we help?</h2>
+            <p className="mt-1 text-sm text-primary-foreground/85">
+              Choose a secure way to connect with Estate Nest.
             </p>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex",
-                  message.type === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[80%] p-3 rounded-2xl text-sm",
-                    message.type === "user"
-                      ? "bg-primary text-primary-foreground ml-auto"
-                      : "bg-muted text-foreground"
-                  )}
-                >
-                  {message.text}
-                </div>
-              </div>
-            ))}
+          <div className="space-y-3 p-4">
+            <Button asChild className="min-h-11 w-full justify-between bg-gradient-accent hover:shadow-glow">
+              <Link ref={primaryActionRef} to="/quote" onClick={() => setIsOpen(false)}>
+                Get Your Free Quote
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="min-h-11 w-full justify-start">
+              <a href="tel:780-860-3191">
+                <Phone aria-hidden="true" className="mr-2 h-4 w-4" />
+                Call 780-860-3191
+              </a>
+            </Button>
+            <Button asChild variant="outline" className="min-h-11 w-full justify-start">
+              <a href="mailto:hello@estatenest.ca">
+                <Mail aria-hidden="true" className="mr-2 h-4 w-4" />
+                Email Estate Nest
+              </a>
+            </Button>
+            <Button asChild variant="ghost" className="min-h-11 w-full justify-start">
+              <Link to="/faq" onClick={() => setIsOpen(false)}>
+                <CircleHelp aria-hidden="true" className="mr-2 h-4 w-4" />
+                Read common insurance questions
+              </Link>
+            </Button>
+            <p className="rounded-lg bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
+              Information on this website is general. Eligibility, pricing, and coverage depend on insurer underwriting and policy terms. A licensed advisor should confirm recommendations.
+            </p>
           </div>
-
-          {/* Quick Replies */}
-          <div className="p-3 border-t border-border">
-            <div className="flex flex-wrap gap-2 mb-3">
-              {quickReplies.map((reply) => (
-                <button
-                  key={reply}
-                  onClick={() => handleQuickReply(reply)}
-                  className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-full transition-colors"
-                >
-                  {reply}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Input */}
-          <div className="p-4 border-t border-border">
-            <div className="flex space-x-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Type your message..."
-                aria-label="Chat message"
-                className="flex-1"
-              />
-              <Button
-                onClick={handleSend}
-                size="icon"
-                aria-label="Send message"
-                className="min-h-11 min-w-11 bg-gradient-accent hover:shadow-glow"
-              >
-                <Send aria-hidden="true" className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+        </section>
       )}
     </>
   );

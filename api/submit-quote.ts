@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getLeadNotificationRecipients, sendGmailMessage } from './_lib/gmail.js';
+import { isTrustedOrigin } from './_lib/session.js';
 import { getSupabaseAdmin } from './_lib/supabase.js';
 
 interface QuoteFormData {
@@ -17,6 +18,7 @@ interface QuoteFormData {
   insuranceAmount: string;
   insuranceType: string;
   readyToProceed: string;
+  website?: string;
 }
 
 interface ValidationError {
@@ -202,7 +204,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ success: false, message: 'Method not allowed. Please use POST to submit the form.' });
   }
 
+  if (!isTrustedOrigin(req)) {
+    return res.status(403).json({ success: false, message: 'Invalid request origin.' });
+  }
+
   const data = (req.body || {}) as Partial<QuoteFormData>;
+  if (normalizedText(data.website, 200)) {
+    return res.status(400).json({ success: false, message: 'Unable to accept this request.' });
+  }
   const sanitized: QuoteFormData = {
     firstName: normalizedText(data.firstName, 100),
     lastName: normalizedText(data.lastName, 100),

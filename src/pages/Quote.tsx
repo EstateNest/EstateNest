@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,14 +17,13 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 import { toast } from "@/hooks/use-toast";
-import { Shield, CheckCircle, Award } from "lucide-react";
+import { Shield, CheckCircle } from "lucide-react";
 
 type AnalyticsWindow = Window & {
   gtag?: (command: string, eventName: string, parameters: Record<string, string>) => void;
 };
 
 const Quote = () => {
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -41,10 +39,14 @@ const Quote = () => {
     insuranceAmount: "",
     insuranceType: "",
     readyToProceed: "",
+    website: "",
   });
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [submissionConfirmed, setSubmissionConfirmed] = useState(false);
   const [submissionConfirmation, setSubmissionConfirmation] = useState<{ message: string; leadReference?: string } | null>(null);
+  const updateFormField = (field: keyof typeof formData, value: string) => {
+    setFormData((current) => ({ ...current, [field]: value }));
+  };
 
   const insuranceTypes = [
     "Life Insurance",
@@ -115,17 +117,12 @@ const Quote = () => {
       return;
     }
 
-    if (!captchaVerified) {
+    if (!submissionConfirmed) {
       toast({
-        title: "Verification Required",
-        description: "Please complete the verification.",
+        title: "Confirmation Required",
+        description: "Please confirm that you are requesting contact from Estate Nest.",
         variant: "destructive",
       });
-      return;
-    }
-
-    if (formData.readyToProceed === "no") {
-      navigate("/");
       return;
     }
 
@@ -146,7 +143,7 @@ const Quote = () => {
 
       if (response.ok && result.success) {
         setSubmissionConfirmation({
-          message: result.message || "Your quote request was securely accepted. We'll contact you within 24 hours.",
+            message: result.message || "Your quote request was securely accepted. We'll contact you about the next steps.",
           leadReference: result.leadReference,
         });
         // Conversion tracking - fire after successful submission
@@ -167,7 +164,7 @@ const Quote = () => {
 
         toast({
           title: "Quote Request Submitted!",
-          description: "We'll contact you within 24 hours to discuss your coverage options.",
+          description: "We'll contact you to discuss the next steps.",
         });
 
         // Reset form
@@ -185,9 +182,10 @@ const Quote = () => {
           insuranceAmount: "",
           insuranceType: "",
           readyToProceed: "",
+          website: "",
         });
         setAcceptedPrivacy(false);
-        setCaptchaVerified(false);
+        setSubmissionConfirmed(false);
       } else {
         toast({
           title: "Submission Failed",
@@ -232,28 +230,28 @@ const Quote = () => {
               <Shield className="w-8 h-8 text-primary" />
               <div>
                 <div className="font-semibold text-sm">E&O Insured</div>
-                <div className="text-xs text-muted-foreground">Fully Licensed</div>
+                <div className="text-xs text-muted-foreground">Professional Coverage</div>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
               <CheckCircle className="w-8 h-8 text-primary" />
               <div>
-                <div className="font-semibold text-sm">Families</div>
-                <div className="text-xs text-muted-foreground">Protected in AB & ON</div>
+                <div className="font-semibold text-sm">Service Areas</div>
+                <div className="text-xs text-muted-foreground">Alberta & Ontario</div>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
               <Shield className="w-8 h-8 text-primary" />
               <div>
-                <div className="font-semibold text-sm">$50M+</div>
-                <div className="text-xs text-muted-foreground">Coverage Placed</div>
+                <div className="font-semibold text-sm">Needs-Based</div>
+                <div className="text-xs text-muted-foreground">Advisor Guidance</div>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-card rounded-xl shadow-card">
-              <Award className="w-8 h-8 text-primary" />
+              <CheckCircle className="w-8 h-8 text-primary" />
               <div>
-                <div className="font-semibold text-sm">5.0 ★ Google</div>
-                <div className="text-xs text-muted-foreground">47 Reviews</div>
+                <div className="font-semibold text-sm">Secure Request</div>
+                <div className="text-xs text-muted-foreground">Human Follow-Up</div>
               </div>
             </div>
           </div>
@@ -262,7 +260,7 @@ const Quote = () => {
             <CardHeader>
               <CardTitle className="text-2xl">Quote Request Form</CardTitle>
               <CardDescription>
-                Fill out the form below and we'll get back to you within 24 hours
+                Fill out the form below and an Estate Nest advisor will review your request.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -282,7 +280,7 @@ const Quote = () => {
                       id="firstName"
                       name="firstName"
                       value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      onChange={(event) => updateFormField("firstName", event.target.value)}
                       placeholder="John"
                       required
                     />
@@ -293,7 +291,7 @@ const Quote = () => {
                       id="lastName"
                       name="lastName"
                       value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      onChange={(event) => updateFormField("lastName", event.target.value)}
                       placeholder="Doe"
                       required
                     />
@@ -308,7 +306,7 @@ const Quote = () => {
                       name="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(event) => updateFormField("email", event.target.value)}
                       placeholder="john.doe@example.com"
                       required
                     />
@@ -320,7 +318,7 @@ const Quote = () => {
                       name="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(event) => updateFormField("phone", event.target.value)}
                       placeholder="780-123-4567"
                       required
                     />
@@ -331,7 +329,7 @@ const Quote = () => {
                   <Label htmlFor="province">Province *</Label>
                   <Select
                     value={formData.province}
-                    onValueChange={(value) => setFormData({ ...formData, province: value })}
+                    onValueChange={(value) => updateFormField("province", value)}
                   >
                     <SelectTrigger id="province">
                       <SelectValue placeholder="Select your province" />
@@ -352,7 +350,7 @@ const Quote = () => {
                     <Label htmlFor="smokingHistory">Smoking History *</Label>
                     <Select
                       value={formData.smokingHistory}
-                      onValueChange={(value) => setFormData({ ...formData, smokingHistory: value })}
+                      onValueChange={(value) => updateFormField("smokingHistory", value)}
                     >
                       <SelectTrigger id="smokingHistory">
                         <SelectValue placeholder="Select smoking status" />
@@ -368,7 +366,7 @@ const Quote = () => {
                     <Label htmlFor="medicalHistory">Medical History *</Label>
                     <Select
                       value={formData.medicalHistory}
-                      onValueChange={(value) => setFormData({ ...formData, medicalHistory: value })}
+                      onValueChange={(value) => updateFormField("medicalHistory", value)}
                     >
                       <SelectTrigger id="medicalHistory">
                         <SelectValue placeholder="Do you have any medical conditions?" />
@@ -387,7 +385,7 @@ const Quote = () => {
                         <Input
                           id="medicalCondition"
                           value={formData.medicalCondition}
-                          onChange={(e) => setFormData({ ...formData, medicalCondition: e.target.value })}
+                          onChange={(event) => updateFormField("medicalCondition", event.target.value)}
                           placeholder="Please describe your condition"
                         />
                       </div>
@@ -396,7 +394,7 @@ const Quote = () => {
                         <Input
                           id="medicineName"
                           value={formData.medicineName}
-                          onChange={(e) => setFormData({ ...formData, medicineName: e.target.value })}
+                          onChange={(event) => updateFormField("medicineName", event.target.value)}
                           placeholder="Medicine name"
                         />
                       </div>
@@ -405,7 +403,7 @@ const Quote = () => {
                         <Input
                           id="dosage"
                           value={formData.dosage}
-                          onChange={(e) => setFormData({ ...formData, dosage: e.target.value })}
+                          onChange={(event) => updateFormField("dosage", event.target.value)}
                           placeholder="e.g., 10mg daily"
                         />
                       </div>
@@ -421,7 +419,7 @@ const Quote = () => {
                     <Label htmlFor="insuranceType">Type of Insurance *</Label>
                     <Select
                       value={formData.insuranceType}
-                      onValueChange={(value) => setFormData({ ...formData, insuranceType: value })}
+                      onValueChange={(value) => updateFormField("insuranceType", value)}
                     >
                       <SelectTrigger id="insuranceType">
                         <SelectValue placeholder="Select insurance type" />
@@ -440,8 +438,9 @@ const Quote = () => {
                     <Label htmlFor="insuranceAmount">Coverage Amount Needed *</Label>
                     <Input
                       id="insuranceAmount"
+                      inputMode="numeric"
                       value={formData.insuranceAmount}
-                      onChange={(e) => setFormData({ ...formData, insuranceAmount: e.target.value })}
+                      onChange={(event) => updateFormField("insuranceAmount", event.target.value)}
                       placeholder="e.g., $500,000"
                     />
                   </div>
@@ -450,7 +449,7 @@ const Quote = () => {
                     <Label htmlFor="readyToProceed">Are You Ready to Proceed? *</Label>
                     <Select
                       value={formData.readyToProceed}
-                      onValueChange={(value) => setFormData({ ...formData, readyToProceed: value })}
+                      onValueChange={(value) => updateFormField("readyToProceed", value)}
                     >
                       <SelectTrigger id="readyToProceed">
                         <SelectValue placeholder="Select your answer" />
@@ -465,6 +464,17 @@ const Quote = () => {
 
                 {/* Privacy & Verification */}
                 <div className="space-y-4 pt-4 border-t border-border">
+                  <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={formData.website}
+                      onChange={(event) => updateFormField("website", event.target.value)}
+                    />
+                  </div>
                   <div className="flex items-start space-x-3">
                     <Checkbox
                       id="privacy"
@@ -472,24 +482,24 @@ const Quote = () => {
                       onCheckedChange={(checked) => setAcceptedPrivacy(checked as boolean)}
                     />
                     <Label htmlFor="privacy" className="text-sm leading-relaxed cursor-pointer">
-                      I agree to the privacy policy and consent to Estate Nest Inc. contacting me regarding my insurance needs. I understand my information is protected by E&O insurance coverage.
+                      I agree to the Privacy Policy and consent to Estate Nest Inc. contacting me about this request. I understand this is a request for contact, not an insurance application or binding quote.
                     </Label>
                   </div>
 
                   <div className="flex items-start space-x-3">
                     <Checkbox
-                      id="captcha"
-                      checked={captchaVerified}
-                      onCheckedChange={(checked) => setCaptchaVerified(checked as boolean)}
+                      id="submission-confirmation"
+                      checked={submissionConfirmed}
+                      onCheckedChange={(checked) => setSubmissionConfirmed(checked as boolean)}
                     />
-                    <Label htmlFor="captcha" className="text-sm cursor-pointer">
-                      I am not a robot (Verification)
+                    <Label htmlFor="submission-confirmation" className="text-sm cursor-pointer">
+                      I confirm the information above is accurate and I am requesting contact from Estate Nest.
                     </Label>
                   </div>
 
                   <div className="p-4 bg-muted rounded-lg border border-primary/20">
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      <strong>Disclaimer:</strong> By clicking "Get My Quote", you explicitly initiate this request of your own free will and confirm you are under no obligation. We protect your details and will share with insurance companies only if you choose to proceed after speaking with our licensed advisor. Estate Nest Inc. is fully licensed in AB & ON and carries professional E&O insurance. By submitting, you agree to our Privacy and Cookie Policies, and the standard limitations on cyber transmission risk outlined in our full Terms & Conditions.
+                      <strong>Important:</strong> Submitting this form requests contact from Estate Nest and does not create coverage or guarantee eligibility, pricing, or approval. Those depend on insurer underwriting and policy terms. Information provided here is handled as described in our Privacy Policy and is not legal, tax, medical, or individualized insurance advice.
                     </p>
                   </div>
                 </div>

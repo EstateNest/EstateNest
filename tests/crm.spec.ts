@@ -137,6 +137,17 @@ test.describe('Estate Nest management routing', () => {
     await expect(page.getByRole('link', { name: 'Estate Nest Home', exact: true })).toHaveAttribute('href', '/');
     await expect(page.getByText('Default Login Credentials')).toHaveCount(0);
   });
+
+  test('malformed session responses do not redirect away from the login screen', async ({ page }) => {
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Unexpected fallback</title>' });
+    });
+
+    await page.goto('/management/login');
+    await expect(page).toHaveURL(/\/management\/login$/);
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+  });
+
   test('login home return is keyboard accessible and reaches the public website', async ({ page }) => {
     await page.route('**/api/auth/me', async (route) => {
       await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Not authenticated' }) });
@@ -300,6 +311,16 @@ test.describe('Estate Nest management routing', () => {
     });
     await page.goto('/management/dashboard');
     await expect(page).toHaveURL(/\/management\/login$/);
+  });
+
+  test('dashboard rejects a successful response without a user instead of spinning indefinitely', async ({ page }) => {
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+    });
+
+    await page.goto('/management/dashboard');
+    await expect(page).toHaveURL(/\/management\/login$/);
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
   });
 
   test('every tab opens inside the authenticated management shell', async ({ page }) => {

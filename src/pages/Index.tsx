@@ -64,10 +64,10 @@ const Index = () => {
   ];
 
   const trustIndicators = [
-    { icon: Award, label: "E&O Insured", value: "Fully Licensed" },
-    { icon: Users, label: "Families Protected", value: "Serving Alberta & Ontario" },
-    { icon: Shield, label: "Coverage Placed", value: "$50M+" },
-    { icon: CheckCircle, label: "Service Areas", value: "Licensed" },
+    { icon: Award, label: "E&O Insured", value: "Professional Protection" },
+    { icon: Users, label: "Service Areas", value: "Alberta & Ontario" },
+    { icon: Shield, label: "Needs-Based Planning", value: "Personalized Guidance" },
+    { icon: CheckCircle, label: "Quote Support", value: "Human Advisor Review" },
   ];
 
   return (
@@ -94,7 +94,7 @@ const Index = () => {
               </h1>
               
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Comprehensive life insurance and financial protection solutions designed for modern families. Licensed in Alberta & Ontario with E&O coverage for your peace of mind.
+                Comprehensive life insurance and financial protection guidance for modern families. Serving Alberta and Ontario with professional E&O coverage.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">

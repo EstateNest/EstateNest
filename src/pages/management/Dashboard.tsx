@@ -1260,7 +1260,11 @@ const Dashboard = () => {
           navigate(response.status === 403 ? '/management/access-denied' : '/management/login', { replace: true });
           return;
         }
-        const payload = await response.json();
+        const payload = await response.json().catch(() => null) as { user?: ManagementUser } | null;
+        if (!payload?.user) {
+          navigate('/management/login', { replace: true });
+          return;
+        }
         if (active) setUser(payload.user);
       } catch {
         navigate('/management/login', { replace: true });
