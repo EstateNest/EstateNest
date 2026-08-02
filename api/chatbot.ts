@@ -63,6 +63,10 @@ function requestAction(req: VercelRequest): string {
 function secureCrmBaseUrl(): string {
   const configured = process.env.PUBLIC_SITE_URL?.trim();
   if (configured && /^https:\/\//i.test(configured)) return configured.replace(/\/$/, '');
+  const previewHost = process.env.VERCEL_URL?.trim();
+  if (process.env.VERCEL_ENV === 'preview' && previewHost) {
+    return `https://${previewHost.replace(/^https?:\/\//i, '').replace(/\/$/, '')}`;
+  }
   return 'https://www.estatenest.ca';
 }
 
