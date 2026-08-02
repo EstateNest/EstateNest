@@ -69,6 +69,16 @@ const Terms = () => {
             </section>
 
             <section>
+              <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">Public Insurance Assistant</h2>
+              <p>
+                The Estate Nest Insurance Assistant is a lead-intake and general-information service. It is not an insurance advisor, quotation engine, underwriting system, legal or tax service, or autonomous decision-maker. Information provided through the assistant is general and is not legal, tax, medical, or individualized insurance advice. Coverage, eligibility, premiums, exclusions, and underwriting decisions depend on the insurer and policy terms. A licensed Estate Nest advisor must confirm any recommendation.
+              </p>
+              <p className="mt-4">
+                Do not submit medical, banking, payment, password, government-identification, or other sensitive information in the assistant. Completing the chatbot does not bind coverage, guarantee eligibility, create an insurance contract, or automatically submit the quote form.
+              </p>
+            </section>
+
+            <section>
               <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">7. Intellectual Property</h2>
               <p>
                 All original copy, web layouts, code architecture, graphic designs, logos, and proprietary data structures on www.estatenest.ca are the exclusive property of Estate Nest Inc. and are protected under Canadian and international copyright and trademark laws.

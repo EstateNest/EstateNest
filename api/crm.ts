@@ -61,6 +61,7 @@ const LEAD_SOURCES = new Set([
   'MARBLISM',
   'EMAIL',
   'PAID_ADS',
+  'CHATBOT',
   'OTHER',
 ]);
 

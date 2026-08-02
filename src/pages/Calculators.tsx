@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import ChatBot from "@/components/ChatBot";
 import { Calculator, TrendingUp, DollarSign } from "lucide-react";
 
 const Calculators = () => {
@@ -73,7 +72,6 @@ const Calculators = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle font-[Inter]">
       <Navigation />
-      <ChatBot />
 
       <section className="pt-32 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">

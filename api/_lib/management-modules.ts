@@ -450,15 +450,16 @@ async function handleNotifications(req: VercelRequest, res: VercelResponse, user
   if (!locked) return res.status(409).json({ message: 'This notification retry is already in progress.' });
 
   const crmUrl = `${publicSiteUrl()}/management/leads/${lead.id}`;
+  const isChatbotProspect = notification.notification_type === 'NEW_CHATBOT_PROSPECT';
   const fields = [
     ['Lead ID', lead.public_id], ['Name', `${contact.first_name || ''} ${contact.last_name || ''}`.trim()],
     ['Email', contact.email], ['Phone', contact.phone], ['Province', contact.province],
-    ['Insurance interest', lead.insurance_interest], ['Source', 'estatenest.ca/quote'], ['Submitted', lead.created_at],
+    ['Insurance interest', lead.insurance_interest], ['Source', isChatbotProspect ? 'Estate Nest public chatbot' : 'estatenest.ca/quote'], ['Submitted', lead.created_at],
   ];
   const result = await sendGmailMessage({
     to: getLeadNotificationRecipients(),
-    subject: `Retry: Estate Nest quote lead ${lead.public_id}`,
-    html: `<h1>Quote lead notification</h1><table>${fields.map(([label, value]) => `<tr><th align="left">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}</table><p><a href="${escapeHtml(crmUrl)}">Open secure CRM record</a></p><p>Sensitive health, medication, underwriting, and coverage-amount details are excluded.</p>`,
+    subject: `Retry: ${isChatbotProspect ? 'New Chatbot Prospect' : 'Estate Nest quote lead'} ${lead.public_id}`,
+    html: `<h1>${isChatbotProspect ? 'New Chatbot Prospect' : 'Quote lead notification'}</h1><table>${fields.map(([label, value]) => `<tr><th align="left">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}</table><p><a href="${escapeHtml(crmUrl)}">Open secure CRM record</a></p><p>${isChatbotProspect ? 'No raw chat or sensitive content is included.' : 'Sensitive health, medication, underwriting, and coverage-amount details are excluded.'}</p>`,
     text: [...fields.map(([label, value]) => `${label}: ${value || 'Not provided'}`), `Secure CRM: ${crmUrl}`].join('\n'),
     replyTo: text(contact.email, 255) || undefined,
   });

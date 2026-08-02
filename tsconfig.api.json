@@ -15,6 +15,7 @@
     "api/_lib/**/*.ts",
     "api/auth/**/*.ts",
     "api/crm.ts",
+    "api/chatbot.ts",
     "api/submit-quote.ts"
   ]
 }

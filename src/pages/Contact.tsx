@@ -1,6 +1,5 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import ChatBot from "@/components/ChatBot";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MapPin, Clock, Facebook, Linkedin, Twitter } from "lucide-react";
@@ -9,7 +8,6 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle font-[Inter]">
       <Navigation />
-      <ChatBot />
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 bg-gradient-hero text-primary-foreground relative overflow-hidden">
