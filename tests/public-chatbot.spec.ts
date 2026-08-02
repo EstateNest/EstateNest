@@ -15,7 +15,11 @@ async function json(route: Route, payload: unknown, status = 200) {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(payload) });
 }
 
-async function installMocks(page: Page, notificationStatus: 'SENT' | 'FAILED' = 'SENT'): Promise<ChatbotMockState> {
+async function installMocks(
+  page: Page,
+  notificationStatus: 'SENT' | 'FAILED' = 'SENT',
+  startResponse: Record<string, unknown> = {},
+): Promise<ChatbotMockState> {
   const state: ChatbotMockState = {
     actions: [],
     prospectCount: 0,
@@ -72,7 +76,9 @@ async function installMocks(page: Page, notificationStatus: 'SENT' | 'FAILED' = 
     const body = request.postDataJSON() as Record<string, unknown>;
     const action = String(body.action || '');
     state.actions.push(action);
-    if (action === 'start') return json(route, { success: true, sessionId: 'session-public-1', status: 'CONSENTED' }, 201);
+    if (action === 'start') {
+      return json(route, { success: true, sessionId: 'session-public-1', status: 'CONSENTED', resumed: false, ...startResponse }, startResponse.resumed ? 200 : 201);
+    }
     if (action === 'confirm-contact') {
       state.confirmRequests += 1;
       state.prospectCount = 1;
@@ -150,6 +156,24 @@ test.describe('Estate Nest public insurance assistant', () => {
     await expect(panel).toContainText('Thank you for your valuable time');
     await expect(panel.getByRole('link', { name: 'Call 780-860-3191' })).toHaveAttribute('href', 'tel:780-860-3191');
     expect(state.actions).toEqual([]);
+  });
+
+  test('resumes a securely confirmed session without creating another start', async ({ page }) => {
+    const state = await installMocks(page, 'SENT', {
+      status: 'CONTACT_CONFIRMED',
+      resumed: true,
+      prospectReference: 'ENL-20260802-RESUMED',
+    });
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Open Estate Nest insurance assistant' }).click();
+    const panel = page.getByTestId('insurance-assistant-panel');
+    await panel.getByRole('button', { name: 'Agree and Continue' }).click();
+
+    await expect(panel).toContainText('What type of insurance or financial protection would you like information about today?');
+    await expect(panel).toContainText('Secure prospect reference: ENL-20260802-RESUMED');
+    await expect(panel.getByLabel('May I have your full name?')).toHaveCount(0);
+    expect(state.actions).toEqual(['start']);
   });
 
   test('validates each contact field and creates no prospect before confirmation', async ({ page }) => {

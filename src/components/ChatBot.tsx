@@ -62,6 +62,9 @@ interface ApiResult {
   sensitive?: boolean;
   prospectReference?: string;
   destination?: string;
+  status?: string;
+  resumed?: boolean;
+  interests?: string[];
 }
 
 const publicChatPaths = new Set([
@@ -172,15 +175,26 @@ const ChatBot = () => {
     setIsWorking(true);
     setError("");
     try {
-      await chatbotPost("start", {
+      const result = await chatbotPost("start", {
         sourcePage: `${window.location.pathname}${window.location.hash || ""}`,
         referrer: document.referrer,
         utm: readUtm(),
         marketingConsent,
       });
+      const resumedProducts = (result.interests || []).filter(
+        (code): code is ChatbotProductCode => chatbotProducts.some((product) => product.code === code),
+      );
       setServerSessionStarted(true);
-      setStep("name");
-      trackChatbotEvent("chatbot_consent_accepted", { step: "consent" });
+      setSelectedProducts(resumedProducts);
+      setProspectReference(result.prospectReference || "");
+      if (["INTEREST_SELECTED", "HANDOFF_CREATED", "QUOTE_STARTED"].includes(result.status || "")) {
+        setStep("options");
+      } else if (result.status === "CONTACT_CONFIRMED" && result.prospectReference) {
+        setStep("interests");
+      } else {
+        setStep("name");
+      }
+      trackChatbotEvent("chatbot_consent_accepted", { step: "consent", resumed: result.resumed === true });
     } catch (requestError) {
       setInlineError(requestError instanceof Error ? requestError.message : "Unable to start the secure chat.");
     } finally {

@@ -45,7 +45,16 @@ interface HandoffPrefill {
   interests: ChatbotProductCode[];
 }
 
+interface ResumableSession {
+  id: string;
+  public_id: string;
+  status: 'CONSENTED' | 'CONTACT_CONFIRMED' | 'INTEREST_SELECTED' | 'HANDOFF_CREATED' | 'QUOTE_STARTED';
+  lead_id: string | null;
+  interests: ChatbotProductCode[];
+}
+
 const productByCode = new Map(chatbotProducts.map((product) => [product.code, product]));
+const resumableSessionStatuses = ['CONSENTED', 'CONTACT_CONFIRMED', 'INTEREST_SELECTED', 'HANDOFF_CREATED', 'QUOTE_STARTED'];
 
 function bodySizeIsSafe(req: VercelRequest): boolean {
   try {
@@ -202,12 +211,73 @@ async function handleHandoffRead(req: VercelRequest, res: VercelResponse) {
   });
 }
 
+async function findResumableSession(token: string, marketingStatus: 'GRANTED' | 'DECLINED') {
+  const admin = getSupabaseAdmin();
+  const { data: session, error: sessionError } = await admin
+    .from('chatbot_sessions')
+    .select('id, public_id, status, lead_id, interests')
+    .eq('session_token_hash', hashOpaqueToken(token))
+    .gt('retention_until', new Date().toISOString())
+    .in('status', resumableSessionStatuses)
+    .maybeSingle();
+
+  if (sessionError || !session?.id) return null;
+
+  const { data: consent, error: consentError } = await admin
+    .from('chatbot_consent_records')
+    .select('status')
+    .eq('chatbot_session_id', session.id)
+    .eq('consent_type', 'MARKETING')
+    .maybeSingle();
+
+  if (consentError || consent?.status !== marketingStatus) return null;
+
+  const resumable = session as ResumableSession;
+  let prospectReference = '';
+  if (resumable.lead_id) {
+    const { data: lead } = await admin
+      .from('leads')
+      .select('public_id')
+      .eq('id', resumable.lead_id)
+      .maybeSingle();
+    prospectReference = String(lead?.public_id || '');
+  }
+
+  await admin
+    .from('chatbot_sessions')
+    .update({ last_interaction_at: new Date().toISOString() })
+    .eq('id', resumable.id);
+
+  return {
+    sessionId: resumable.public_id,
+    status: resumable.status,
+    prospectReference,
+    interests: Array.isArray(resumable.interests)
+      ? resumable.interests.filter((code) => productByCode.has(code))
+      : [],
+  };
+}
+
 async function handleStart(req: VercelRequest, res: VercelResponse) {
-  const token = randomOpaqueToken();
   const { ipHash, userAgentHash } = requestFingerprint(req, getRequestIp(req));
   const sourcePage = safeSourcePage(req.body?.sourcePage);
   const referrer = safeReferrer(req.body?.referrer || req.headers.referer);
-  const marketingStatus = req.body?.marketingConsent === true ? 'GRANTED' : 'DECLINED';
+  const marketingStatus = req.body?.marketingConsent === true ? 'GRANTED' as const : 'DECLINED' as const;
+  const existingToken = readCookie(req, CHATBOT_SESSION_COOKIE);
+  if (existingToken) {
+    const resumable = await findResumableSession(existingToken, marketingStatus);
+    if (resumable) {
+      setPrivateCookie(res, CHATBOT_SESSION_COOKIE, existingToken, 24 * 60 * 60);
+      return res.status(200).json({
+        success: true,
+        ...resumable,
+        resumed: true,
+        consentVersion: CHATBOT_CONTENT_VERSION,
+      });
+    }
+  }
+
+  const token = randomOpaqueToken();
   const { data, error } = await getSupabaseAdmin().rpc('start_chatbot_session', {
     p_session_token_hash: hashOpaqueToken(token),
     p_source_page: sourcePage,
@@ -229,6 +299,7 @@ async function handleStart(req: VercelRequest, res: VercelResponse) {
     success: true,
     sessionId: session.session_public_id,
     status: session.session_status,
+    resumed: false,
     consentVersion: CHATBOT_CONTENT_VERSION,
   });
 }
