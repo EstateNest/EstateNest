@@ -20,6 +20,10 @@ import ChatBot from "@/components/ChatBot";
 import { toast } from "@/hooks/use-toast";
 import { Shield, CheckCircle, Award } from "lucide-react";
 
+type AnalyticsWindow = Window & {
+  gtag?: (command: string, eventName: string, parameters: Record<string, string>) => void;
+};
+
 const Quote = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,6 +32,7 @@ const Quote = () => {
     lastName: "",
     email: "",
     phone: "",
+    province: "",
     smokingHistory: "",
     medicalHistory: "",
     medicalCondition: "",
@@ -39,6 +44,7 @@ const Quote = () => {
   });
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [submissionConfirmation, setSubmissionConfirmation] = useState<{ message: string; leadReference?: string } | null>(null);
 
   const insuranceTypes = [
     "Life Insurance",
@@ -58,7 +64,18 @@ const Quote = () => {
     e.preventDefault();
 
     // Client-side validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+    if (
+      !formData.firstName
+      || !formData.lastName
+      || !formData.email
+      || !formData.phone
+      || !formData.province
+      || !formData.smokingHistory
+      || !formData.medicalHistory
+      || !formData.insuranceAmount
+      || !formData.insuranceType
+      || !formData.readyToProceed
+    ) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -113,6 +130,7 @@ const Quote = () => {
     }
 
     // Submit to API
+    setSubmissionConfirmation(null);
     setIsSubmitting(true);
 
     try {
@@ -127,12 +145,17 @@ const Quote = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        setSubmissionConfirmation({
+          message: result.message || "Your quote request was securely accepted. We'll contact you within 24 hours.",
+          leadReference: result.leadReference,
+        });
         // Conversion tracking - fire after successful submission
         // Note: Does NOT send any PII to analytics
         if (typeof window !== 'undefined') {
           // Google Analytics 4
-          if ((window as any).gtag) {
-            (window as any).gtag('event', 'quote_request_submitted', {
+          const gtag = (window as AnalyticsWindow).gtag;
+          if (typeof gtag === 'function') {
+            gtag('event', 'quote_request_submitted', {
               event_category: 'lead_generation',
               event_label: 'quote_form',
               insurance_type: formData.insuranceType
@@ -153,6 +176,7 @@ const Quote = () => {
           lastName: "",
           email: "",
           phone: "",
+          province: "",
           smokingHistory: "",
           medicalHistory: "",
           medicalCondition: "",
@@ -242,13 +266,21 @@ const Quote = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              {submissionConfirmation && (
+                <div role="status" aria-live="polite" data-testid="quote-accepted" className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
+                  <p className="font-semibold">Quote Request Submitted!</p>
+                  <p className="mt-1 text-sm">{submissionConfirmation.message}</p>
+                  {submissionConfirmation.leadReference && <p className="mt-2 text-xs font-medium">Reference: {submissionConfirmation.leadReference}</p>}
+                </div>
+              )}
+              <form onSubmit={handleSubmit} noValidate className="space-y-6">
                 {/* Personal Information */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name *</Label>
                     <Input
                       id="firstName"
+                      name="firstName"
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       placeholder="John"
@@ -259,6 +291,7 @@ const Quote = () => {
                     <Label htmlFor="lastName">Last Name *</Label>
                     <Input
                       id="lastName"
+                      name="lastName"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                       placeholder="Doe"
@@ -272,6 +305,7 @@ const Quote = () => {
                     <Label htmlFor="email">Email Address *</Label>
                     <Input
                       id="email"
+                      name="email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -283,6 +317,7 @@ const Quote = () => {
                     <Label htmlFor="phone">Phone Number *</Label>
                     <Input
                       id="phone"
+                      name="phone"
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -290,6 +325,23 @@ const Quote = () => {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="province">Province *</Label>
+                  <Select
+                    value={formData.province}
+                    onValueChange={(value) => setFormData({ ...formData, province: value })}
+                  >
+                    <SelectTrigger id="province">
+                      <SelectValue placeholder="Select your province" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AB">Alberta</SelectItem>
+                      <SelectItem value="ON">Ontario</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Online advisory services are currently available in Alberta and Ontario.</p>
                 </div>
 
                 {/* Health Information */}
@@ -302,7 +354,7 @@ const Quote = () => {
                       value={formData.smokingHistory}
                       onValueChange={(value) => setFormData({ ...formData, smokingHistory: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="smokingHistory">
                         <SelectValue placeholder="Select smoking status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -318,7 +370,7 @@ const Quote = () => {
                       value={formData.medicalHistory}
                       onValueChange={(value) => setFormData({ ...formData, medicalHistory: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="medicalHistory">
                         <SelectValue placeholder="Do you have any medical conditions?" />
                       </SelectTrigger>
                       <SelectContent>
@@ -371,7 +423,7 @@ const Quote = () => {
                       value={formData.insuranceType}
                       onValueChange={(value) => setFormData({ ...formData, insuranceType: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="insuranceType">
                         <SelectValue placeholder="Select insurance type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -400,7 +452,7 @@ const Quote = () => {
                       value={formData.readyToProceed}
                       onValueChange={(value) => setFormData({ ...formData, readyToProceed: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="readyToProceed">
                         <SelectValue placeholder="Select your answer" />
                       </SelectTrigger>
                       <SelectContent>

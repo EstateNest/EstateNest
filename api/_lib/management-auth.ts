@@ -1,4 +1,4 @@
-import { createClient, type Session, type User } from '@supabase/supabase-js';
+import { createClient, type Session, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { SessionUser } from './session.js';
 
@@ -12,7 +12,13 @@ const APPROVED_MANAGEMENT_ROLES = new Set([
   'MARKETING',
 ]);
 
-type AuthenticationStatus = 'authorized' | 'unauthenticated' | 'unauthorized' | 'unavailable';
+type AuthenticationStatus =
+  | 'authorized'
+  | 'mfa_required'
+  | 'mfa_enrollment_required'
+  | 'unauthenticated'
+  | 'unauthorized'
+  | 'unavailable';
 
 export interface ManagementAuthResult {
   status: AuthenticationStatus;
@@ -21,6 +27,12 @@ export interface ManagementAuthResult {
 
 export interface ManagementSignInResult extends ManagementAuthResult {
   session?: Session;
+}
+
+export interface ManagementMfaContext {
+  client: SupabaseClient;
+  session: Session;
+  user: SessionUser;
 }
 
 function getSupabaseAuthConfiguration() {
@@ -105,6 +117,33 @@ async function getManagementRole(accessToken: string, userId: string): Promise<s
   return APPROVED_MANAGEMENT_ROLES.has(role) ? role : null;
 }
 
+function managementMfaRequired(): boolean {
+  return String(process.env.MANAGEMENT_MFA_REQUIRED || 'true').toLowerCase() !== 'false';
+}
+
+async function getMfaStatus(client: SupabaseClient, accessToken: string, role: string): Promise<AuthenticationStatus> {
+  const [assurance, factors] = await Promise.all([
+    client.auth.mfa.getAuthenticatorAssuranceLevel(accessToken),
+    client.auth.mfa.listFactors(),
+  ]);
+
+  if (assurance.error || factors.error) {
+    return 'unavailable';
+  }
+
+  const verifiedTotpFactors = factors.data.totp.filter((factor) => factor.status === 'verified');
+  if (assurance.data.currentLevel === 'aal2') {
+    return 'authorized';
+  }
+  if (verifiedTotpFactors.length || assurance.data.nextLevel === 'aal2') {
+    return 'mfa_required';
+  }
+  if (managementMfaRequired() && APPROVED_MANAGEMENT_ROLES.has(role)) {
+    return 'mfa_enrollment_required';
+  }
+  return 'authorized';
+}
+
 function optionalMetadataValue(metadata: Record<string, unknown>, key: string): string | null {
   const value = metadata[key];
   return typeof value === 'string' && value.trim() ? value.trim() : null;
@@ -148,8 +187,10 @@ export async function signInManagementUser(email: string, password: string): Pro
       return { status: 'unauthorized' };
     }
 
+    const status = await getMfaStatus(authClient, data.session.access_token, role);
+
     return {
-      status: 'authorized',
+      status,
       user: toSessionUser(data.user, role),
       session: data.session,
     };
@@ -175,24 +216,14 @@ export async function getManagementAuth(req: VercelRequest, res: VercelResponse)
     return { status: 'unavailable' };
   }
 
-  let activeAccessToken = accessToken;
-  let user: User | null = null;
-  const verifiedUser = await authClient.auth.getUser(accessToken);
-
-  if (!verifiedUser.error && verifiedUser.data.user) {
-    user = verifiedUser.data.user;
-  } else {
-    const refreshed = await authClient.auth.refreshSession({ refresh_token: refreshToken });
-
-    if (refreshed.error || !refreshed.data.user || !refreshed.data.session) {
-      clearAuthSessionCookies(res);
-      return { status: 'unauthenticated' };
-    }
-
-    user = refreshed.data.user;
-    activeAccessToken = refreshed.data.session.access_token;
-    setAuthSessionCookies(res, refreshed.data.session);
+  const sessionResult = await authClient.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+  if (sessionResult.error || !sessionResult.data.user || !sessionResult.data.session) {
+    clearAuthSessionCookies(res);
+    return { status: 'unauthenticated' };
   }
+  const user = sessionResult.data.user;
+  const activeAccessToken = sessionResult.data.session.access_token;
+  setAuthSessionCookies(res, sessionResult.data.session);
 
   try {
     const role = await getManagementRole(activeAccessToken, user.id);
@@ -201,10 +232,54 @@ export async function getManagementAuth(req: VercelRequest, res: VercelResponse)
       return { status: 'unauthorized' };
     }
 
-    return { status: 'authorized', user: toSessionUser(user, role) };
+    const status = await getMfaStatus(authClient, activeAccessToken, role);
+    return { status, user: toSessionUser(user, role) };
   } catch {
     return { status: 'unavailable' };
   }
+}
+
+export async function getManagementMfaContext(req: VercelRequest, res: VercelResponse): Promise<ManagementMfaContext | null> {
+  const accessToken = readCookie(req, ACCESS_COOKIE_NAME);
+  const refreshToken = readCookie(req, REFRESH_COOKIE_NAME);
+  if (!accessToken || !refreshToken) return null;
+
+  try {
+    const client = createSupabaseAuthClient();
+    const result = await client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    if (result.error || !result.data.session || !result.data.user) {
+      clearAuthSessionCookies(res);
+      return null;
+    }
+
+    const role = await getManagementRole(result.data.session.access_token, result.data.user.id);
+    if (!role) return null;
+    setAuthSessionCookies(res, result.data.session);
+    return {
+      client,
+      session: result.data.session,
+      user: toSessionUser(result.data.user, role),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function sessionFromMfaVerification(data: {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: 'bearer';
+  user: User;
+}): Session {
+  return {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_in: data.expires_in,
+    expires_at: Math.floor(Date.now() / 1000) + data.expires_in,
+    token_type: data.token_type,
+    user: data.user,
+  };
 }
 
 export async function signOutManagementUser(req: VercelRequest): Promise<void> {

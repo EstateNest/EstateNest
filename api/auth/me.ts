@@ -18,6 +18,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({ error: 'Management access is not authorized' });
   }
 
+  if (auth.status === 'mfa_required' || auth.status === 'mfa_enrollment_required') {
+    return res.status(401).json({
+      error: 'Additional authentication is required',
+      code: auth.status === 'mfa_required' ? 'MFA_REQUIRED' : 'MFA_ENROLLMENT_REQUIRED',
+    });
+  }
+
   if (auth.status !== 'authorized' || !auth.user) {
     return res.status(503).json({ error: 'Unable to verify account' });
   }

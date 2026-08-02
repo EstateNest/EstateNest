@@ -45,6 +45,8 @@ EstateNest.ca (Public) ──► API Server (Port 3001) ──► Supabase (Post
 3. Paste and click "Run"
 4. Verify tables created
 
+For Preview validation, apply migrations in timestamp order to a separate staging Supabase project. Do not apply `supabase/migrations/20260801230000_lead_advisor_management.sql` to the production project until the Preview release gate and human review are complete.
+
 ---
 
 ## Phase 2: Local Development Setup
@@ -80,11 +82,15 @@ SUPABASE_SECRET_KEY=your-secret-key
 # Gmail lead notifications
 GMAIL_USER=hello@estatenest.ca
 GMAIL_APP_PASSWORD=configure-as-a-sensitive-vercel-variable
+
+# Management security and protected CRM links
+MANAGEMENT_MFA_REQUIRED=true
+PUBLIC_SITE_URL=https://www.estatenest.ca
 ```
 
 ### 2.5 Configure Supabase Management Authorization
 
-Apply `supabase/migrations/20260801163000_management_user_roles.sql` in the Supabase SQL Editor. Management credentials remain exclusively in Supabase Auth; never add passwords to this repository.
+Apply `supabase/migrations/20260801163000_management_user_roles.sql` in the staging Supabase SQL Editor, followed by `supabase/migrations/20260801230000_lead_advisor_management.sql`. Management credentials remain exclusively in Supabase Auth; never add passwords to this repository. Preview and Production must not share a database for migration testing.
 
 ---
 
@@ -110,12 +116,23 @@ npm run dev
 - POST `/api/auth/login` - Login
 - POST `/api/auth/logout` - Logout
 - GET `/api/auth/me` - Get current user
+- GET/POST `/api/auth/mfa` - Inspect, enrol, verify, confirm, or remove a TOTP factor
 
 ### Leads
 - GET `/api/crm?resource=dashboard` - Dashboard metrics
 - GET/POST/PATCH/DELETE `/api/crm?resource=leads` - Authenticated lead management
 - GET/POST/PATCH/DELETE `/api/crm?resource=contacts` - Authenticated contact management
 - POST `/api/submit-quote` - Public quote capture into Supabase CRM
+- GET/POST/PATCH/DELETE `/api/crm?resource=advisors` - Advisor recruitment and lifecycle
+- GET/POST/PATCH `/api/crm?resource=compliance` - Restricted advisor compliance records
+- GET/POST/PATCH `/api/crm?resource=advisor-contracts` - Restricted insurance-company contracts and masked advisor codes
+- GET/POST/PATCH `/api/crm?resource=carriers` - Carrier/MGA directory with owner-verified contact details
+- GET/POST/PATCH `/api/crm?resource=reminder-rules` - Configurable licence-renewal rules; automatic scheduling remains disabled
+- GET/POST/PATCH `/api/crm?resource=commissions` - Restricted commission records and history
+- GET/POST/PATCH `/api/crm?resource=emails` - Gmail draft, preview, confirmation, send, and retry
+- GET/POST `/api/crm?resource=documents` - Private attachment metadata and signed quarantine uploads
+- GET/POST `/api/crm?resource=notifications` - Quote email status and retry controls
+- GET/POST `/api/crm?resource=reports` - Preview-token-bound export, delivery, and approved inactive scheduling
 
 ### Webhooks (Public)
 - POST `/api/webhooks/inbound-lead` - Public lead capture

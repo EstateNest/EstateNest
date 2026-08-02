@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import type { VercelRequest } from '@vercel/node';
 
 export interface SessionUser {
@@ -49,6 +50,6 @@ export function isTrustedOrigin(req: VercelRequest): boolean {
 export function getRequestIp(req: VercelRequest): string {
   const forwardedFor = req.headers['x-forwarded-for'];
   const value = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
-
-  return value?.split(',')[0]?.trim() || req.socket.remoteAddress || '0.0.0.0';
+  const candidate = value?.split(',')[0]?.trim() || req.socket.remoteAddress || '';
+  return isIP(candidate) ? candidate : '0.0.0.0';
 }

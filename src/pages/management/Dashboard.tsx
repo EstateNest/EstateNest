@@ -12,6 +12,7 @@ import {
 import {
   Activity,
   AlertCircle,
+  Archive,
   ArrowLeft,
   BarChart3,
   CalendarDays,
@@ -24,6 +25,7 @@ import {
   Mail,
   Phone,
   Plus,
+  RotateCcw,
   Search,
   Settings,
   ShieldCheck,
@@ -58,23 +60,42 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import {
   type Contact,
+  type Advisor,
   type DashboardResponse,
   type Lead,
   type ManagementUser,
   contactName,
+  advisorName,
   crmRequest,
   formatDate,
   formatLabel,
   insuranceInterests,
   leadSources,
   leadStatuses,
+  leadOutcomeStatuses,
 } from './crm';
+import {
+  AdvisorDetailPage,
+  AdvisorsPage,
+  CommunicationsPage,
+  CompliancePage,
+  CommissionsPage,
+  NotificationsPage,
+  OperationsAccessNotice,
+  ReportsOperationsPage,
+  LifecycleDialog,
+} from './ManagementOperations';
 
 const navItems = [
   { label: 'Dashboard', path: '/management/dashboard', icon: LayoutDashboard },
   { label: 'Leads', path: '/management/leads', icon: Activity },
-  { label: 'Contacts', path: '/management/contacts', icon: Users },
+  { label: 'Clients', path: '/management/contacts', icon: Users },
   { label: 'Pipeline', path: '/management/pipeline', icon: Workflow },
+  { label: 'Advisors', path: '/management/advisors', icon: UserPlus },
+  { label: 'Compliance', path: '/management/compliance', icon: ShieldCheck },
+  { label: 'Commissions', path: '/management/commissions', icon: BarChart3 },
+  { label: 'Email', path: '/management/email', icon: Mail },
+  { label: 'Notifications', path: '/management/notifications', icon: AlertCircle },
   { label: 'Appointments', path: '/management/appointments', icon: CalendarDays },
   { label: 'Tasks', path: '/management/tasks', icon: ClipboardList },
   { label: 'Content', path: '/management/content', icon: FileText },
@@ -359,12 +380,63 @@ function LeadFormDialog({ open, onOpenChange, onCreated }: {
   );
 }
 
+function LeadOutcomeDialog({ lead, nextStatus, onOpenChange, onUpdated }: {
+  lead: Lead | null;
+  nextStatus: string;
+  onOpenChange: (open: boolean) => void;
+  onUpdated: (lead: Lead) => void;
+}) {
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
+  const [reason, setReason] = useState('');
+  const [nextFollowUpAt, setNextFollowUpAt] = useState('');
+  const [assignedAdvisorId, setAssignedAdvisorId] = useState('');
+  const [futureContactConsent, setFutureContactConsent] = useState('UNKNOWN');
+  const [stageNotes, setStageNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!lead) return;
+    void crmRequest<{ advisors: Advisor[] }>('advisors').then((response) => setAdvisors(response.advisors || [])).catch(() => setAdvisors([]));
+  }, [lead]);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!lead) return;
+    setSaving(true);
+    try {
+      const response = await crmRequest<{ lead: Lead }>('leads', {
+        method: 'PATCH',
+        params: { id: lead.id },
+        body: JSON.stringify({
+          leadStatus: nextStatus,
+          reason,
+          nextFollowUpAt: new Date(nextFollowUpAt).toISOString(),
+          assignedAdvisorId,
+          futureContactConsent,
+          stageNotes,
+        }),
+      });
+      onUpdated(response.lead);
+      toast({ title: 'Outcome recorded', description: `${contactName(lead.contact)} moved to ${formatLabel(nextStatus)} with an audited follow-up record.` });
+      onOpenChange(false);
+    } catch (requestError) {
+      toast({ title: 'Could not record outcome', description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return <Dialog open={Boolean(lead)} onOpenChange={onOpenChange}><DialogContent><form onSubmit={submit}><DialogHeader><DialogTitle>Record {formatLabel(nextStatus)}</DialogTitle><DialogDescription>Reason, follow-up, assigned advisor, consent, notes, timestamp, and user are required and audited.</DialogDescription></DialogHeader><div className="space-y-4 py-5"><div className="space-y-2"><Label htmlFor="outcome-reason">Reason</Label><Textarea id="outcome-reason" required value={reason} onChange={(event) => setReason(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="outcome-follow-up">Next follow-up</Label><Input id="outcome-follow-up" required type="datetime-local" value={nextFollowUpAt} onChange={(event) => setNextFollowUpAt(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="outcome-advisor">Assigned advisor</Label><select id="outcome-advisor" required className={selectClassName} value={assignedAdvisorId} onChange={(event) => setAssignedAdvisorId(event.target.value)}><option value="">Select advisor</option>{advisors.map((advisor) => <option key={advisor.id} value={advisor.id}>{advisorName(advisor)} · {advisor.email || advisor.phone || 'No contact'}</option>)}</select></div><div className="space-y-2"><Label htmlFor="outcome-consent">Future-contact consent</Label><select id="outcome-consent" className={selectClassName} value={futureContactConsent} onChange={(event) => setFutureContactConsent(event.target.value)}><option value="CONSENTED">Consented</option><option value="DECLINED">Declined</option><option value="UNKNOWN">Unknown / confirm before contact</option></select></div><div className="space-y-2"><Label htmlFor="outcome-notes">Outcome notes</Label><Textarea id="outcome-notes" required value={stageNotes} onChange={(event) => setStageNotes(event.target.value)} /></div></div><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" disabled={saving || !reason.trim() || !nextFollowUpAt || !assignedAdvisorId || !stageNotes.trim()}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save outcome</Button></DialogFooter></form></DialogContent></Dialog>;
+}
+
 function LeadsPage({ createOpen = false }: { createOpen?: boolean }) {
   const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('ALL');
   const [open, setOpen] = useState(createOpen);
+  const [outcome, setOutcome] = useState<{ lead: Lead; status: string } | null>(null);
+  const [lifecycle, setLifecycle] = useState<{ lead: Lead; mode: 'archive' | 'restore' } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -372,8 +444,11 @@ function LeadsPage({ createOpen = false }: { createOpen?: boolean }) {
     setLoading(true);
     setError('');
     try {
-      const response = await crmRequest<{ leads: Lead[] }>('leads', { params: { limit: 500 } });
-      setLeads(response.leads || []);
+      const [active, archived] = await Promise.all([
+        crmRequest<{ leads: Lead[] }>('leads', { params: { limit: 500 } }),
+        crmRequest<{ leads: Lead[] }>('leads', { params: { limit: 500, archived: 'true' } }),
+      ]);
+      setLeads([...(active.leads || []), ...(archived.leads || [])]);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unknown error');
     } finally {
@@ -394,6 +469,14 @@ function LeadsPage({ createOpen = false }: { createOpen?: boolean }) {
   }, [leads, search, status]);
 
   const updateStatus = async (lead: Lead, nextStatus: string) => {
+    if (nextStatus === 'ARCHIVED') {
+      setLifecycle({ lead, mode: 'archive' });
+      return;
+    }
+    if (leadOutcomeStatuses.includes(nextStatus as typeof leadOutcomeStatuses[number])) {
+      setOutcome({ lead, status: nextStatus });
+      return;
+    }
     const previousStatus = lead.lead_status;
     setLeads((current) => current.map((item) => item.id === lead.id ? { ...item, lead_status: nextStatus } : item));
     try {
@@ -405,14 +488,19 @@ function LeadsPage({ createOpen = false }: { createOpen?: boolean }) {
     }
   };
 
-  const removeLead = async (lead: Lead) => {
-    if (!window.confirm(`Delete the lead for ${contactName(lead.contact)}? This cannot be undone.`)) return;
+  const lifecycleAction = async (reason: string) => {
+    if (!lifecycle) return;
     try {
-      await crmRequest('leads', { method: 'DELETE', params: { id: lead.id } });
-      setLeads((current) => current.filter((item) => item.id !== lead.id));
-      toast({ title: 'Lead deleted' });
+      if (lifecycle.mode === 'archive') {
+        await crmRequest('leads', { method: 'DELETE', params: { id: lifecycle.lead.id }, body: JSON.stringify({ reason }) });
+      } else {
+        await crmRequest('leads', { method: 'PATCH', params: { id: lifecycle.lead.id }, body: JSON.stringify({ action: 'RESTORE', reason, restoreStage: 'PROSPECT' }) });
+      }
+      toast({ title: lifecycle.mode === 'archive' ? 'Lead archived' : 'Lead restored' });
+      await load();
     } catch (requestError) {
-      toast({ title: 'Could not delete lead', description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+      toast({ title: `Could not ${lifecycle.mode} lead`, description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+      throw requestError;
     }
   };
 
@@ -426,7 +514,7 @@ function LeadsPage({ createOpen = false }: { createOpen?: boolean }) {
 
   return (
     <>
-      <PageHeader title="Leads" description={`${leads.length} prospects captured from quote forms, referrals, and advisor entry.`} action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Add lead</Button>} />
+      <PageHeader title="Leads" description={`${leads.filter((lead) => !lead.archived_at).length} active prospects plus ${leads.filter((lead) => lead.archived_at).length} preserved archived records.`} action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Add lead</Button>} />
       <Card>
         <CardHeader>
           <div className="grid gap-3 md:grid-cols-[1fr_240px]">
@@ -444,9 +532,9 @@ function LeadsPage({ createOpen = false }: { createOpen?: boolean }) {
                     <TableCell><p className="font-medium text-slate-900">{contactName(lead.contact)}</p><p className="text-xs text-slate-500">{lead.contact?.email || lead.contact?.phone || 'No contact method'}</p></TableCell>
                     <TableCell>{formatLabel(lead.insurance_interest)}</TableCell>
                     <TableCell>{formatLabel(lead.source)}</TableCell>
-                    <TableCell onClick={(event) => event.stopPropagation()}><select aria-label={`Pipeline stage for ${contactName(lead.contact)}`} className="h-9 max-w-52 rounded-md border bg-white px-2 text-xs" value={lead.lead_status} onChange={(event) => void updateStatus(lead, event.target.value)}>{leadStatuses.map((value) => <option key={value} value={value}>{formatLabel(value)}</option>)}</select></TableCell>
+                    <TableCell onClick={(event) => event.stopPropagation()}><select aria-label={`Pipeline stage for ${contactName(lead.contact)}`} disabled={Boolean(lead.archived_at)} className="h-9 max-w-52 rounded-md border bg-white px-2 text-xs disabled:bg-slate-100" value={lead.lead_status} onChange={(event) => void updateStatus(lead, event.target.value)}>{leadStatuses.map((value) => <option key={value} value={value}>{formatLabel(value)}</option>)}</select></TableCell>
                     <TableCell>{formatDate(lead.created_at)}</TableCell>
-                    <TableCell onClick={(event) => event.stopPropagation()}><Button aria-label={`Delete lead for ${contactName(lead.contact)}`} variant="ghost" size="icon" onClick={() => void removeLead(lead)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell>
+                    <TableCell onClick={(event) => event.stopPropagation()}><Button aria-label={`${lead.archived_at ? 'Restore' : 'Archive'} lead for ${contactName(lead.contact)}`} variant="ghost" size="icon" onClick={() => setLifecycle({ lead, mode: lead.archived_at ? 'restore' : 'archive' })}>{lead.archived_at ? <RotateCcw className="h-4 w-4 text-emerald-600" /> : <Archive className="h-4 w-4 text-slate-500" />}</Button></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -455,6 +543,8 @@ function LeadsPage({ createOpen = false }: { createOpen?: boolean }) {
         </CardContent>
       </Card>
       <LeadFormDialog open={open} onOpenChange={closeDialog} onCreated={load} />
+      <LeadOutcomeDialog lead={outcome?.lead || null} nextStatus={outcome?.status || ''} onOpenChange={(nextOpen) => { if (!nextOpen) setOutcome(null); }} onUpdated={(updated) => setLeads((current) => current.map((lead) => lead.id === updated.id ? updated : lead))} />
+      {lifecycle && <LifecycleDialog open onOpenChange={(nextOpen) => { if (!nextOpen) setLifecycle(null); }} mode={lifecycle.mode} recordLabel={`lead for ${contactName(lifecycle.lead.contact)}`} onConfirm={lifecycleAction} />}
     </>
   );
 }
@@ -467,6 +557,8 @@ function LeadDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [outcomeStatus, setOutcomeStatus] = useState('');
+  const [lifecycleOpen, setLifecycleOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -498,13 +590,29 @@ function LeadDetailPage() {
     }
   };
 
-  const remove = async () => {
-    if (!lead || !window.confirm(`Delete the lead for ${contactName(lead.contact)}?`)) return;
+  const lifecycleAction = async (reason: string) => {
+    if (!lead) return;
     try {
-      await crmRequest('leads', { method: 'DELETE', params: { id: lead.id } });
-      navigate('/management/leads');
+      if (lead.archived_at) {
+        await crmRequest('leads', { method: 'PATCH', params: { id: lead.id }, body: JSON.stringify({ action: 'RESTORE', reason, restoreStage: 'PROSPECT' }) });
+        await load();
+      } else {
+        await crmRequest('leads', { method: 'DELETE', params: { id: lead.id }, body: JSON.stringify({ reason }) });
+        navigate('/management/leads');
+      }
     } catch (requestError) {
-      toast({ title: 'Could not delete lead', description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+      toast({ title: `Could not ${lead.archived_at ? 'restore' : 'archive'} lead`, description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+      throw requestError;
+    }
+  };
+
+  const requestStatusChange = (nextStatus: string) => {
+    if (nextStatus === 'ARCHIVED') {
+      setLifecycleOpen(true);
+    } else if (leadOutcomeStatuses.includes(nextStatus as typeof leadOutcomeStatuses[number])) {
+      setOutcomeStatus(nextStatus);
+    } else {
+      void save({ leadStatus: nextStatus });
     }
   };
 
@@ -514,13 +622,16 @@ function LeadDetailPage() {
   return (
     <>
       <div className="mb-5"><Button variant="ghost" asChild><Link to="/management/leads"><ArrowLeft className="mr-2 h-4 w-4" />Back to leads</Link></Button></div>
-      <PageHeader title={contactName(lead.contact)} description={`${formatLabel(lead.insurance_interest)} lead from ${formatLabel(lead.source)}`} action={<Button variant="destructive" onClick={() => void remove()}><Trash2 className="mr-2 h-4 w-4" />Delete lead</Button>} />
+      <PageHeader title={contactName(lead.contact)} description={`${lead.public_id || 'Lead'} · ${formatLabel(lead.insurance_interest)} from ${formatLabel(lead.source)}`} action={<Button variant="outline" onClick={() => setLifecycleOpen(true)}>{lead.archived_at ? <RotateCcw className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{lead.archived_at ? 'Restore lead' : 'Archive lead'}</Button>} />
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle>Pipeline details</CardTitle><CardDescription>Update the stage and follow-up information.</CardDescription></CardHeader>
           <CardContent className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-2"><Label htmlFor="detail-stage">Pipeline stage</Label><select id="detail-stage" className={selectClassName} value={lead.lead_status} onChange={(event) => void save({ leadStatus: event.target.value })}>{leadStatuses.map((value) => <option key={value} value={value}>{formatLabel(value)}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="detail-stage">Pipeline stage</Label><select id="detail-stage" disabled={Boolean(lead.archived_at)} className={selectClassName} value={lead.lead_status} onChange={(event) => requestStatusChange(event.target.value)}>{leadStatuses.map((value) => <option key={value} value={value}>{formatLabel(value)}</option>)}</select></div>
             <div className="space-y-2"><Label htmlFor="detail-follow-up">Next follow-up</Label><Input id="detail-follow-up" type="datetime-local" onChange={(event) => void save({ nextFollowUpAt: event.target.value ? new Date(event.target.value).toISOString() : null })} /></div>
+            <div className="space-y-2"><Label htmlFor="detail-last-contact">Last contact</Label><Input id="detail-last-contact" type="datetime-local" onChange={(event) => void save({ lastContactAt: event.target.value ? new Date(event.target.value).toISOString() : null })} /></div>
+            <div className="rounded-lg border bg-slate-50 p-3 text-sm"><p className="text-slate-500">Assigned advisor</p><p>{lead.assigned_advisor_id ? 'Assigned in CRM' : 'Not assigned'}</p></div>
+            {lead.outcome_reason && <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:col-span-2"><p className="font-medium text-amber-900">Outcome details</p><p className="text-sm text-amber-800">{lead.outcome_reason}</p><p className="text-xs text-amber-700">Consent: {formatLabel(lead.future_contact_consent)} · {lead.stage_notes}</p></div>}
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="detail-notes">Advisor notes</Label><Textarea id="detail-notes" rows={7} value={notes} onChange={(event) => setNotes(event.target.value)} /><Button disabled={saving} onClick={() => void save({ notes })}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save notes</Button></div>
           </CardContent>
         </Card>
@@ -535,6 +646,8 @@ function LeadDetailPage() {
           </CardContent>
         </Card>
       </div>
+      <LeadOutcomeDialog lead={outcomeStatus ? lead : null} nextStatus={outcomeStatus} onOpenChange={(nextOpen) => { if (!nextOpen) setOutcomeStatus(''); }} onUpdated={(updated) => { setLead(updated); setOutcomeStatus(''); }} />
+      <LifecycleDialog open={lifecycleOpen} onOpenChange={setLifecycleOpen} mode={lead.archived_at ? 'restore' : 'archive'} recordLabel={`lead for ${contactName(lead.contact)}`} onConfirm={lifecycleAction} />
     </>
   );
 }
@@ -544,12 +657,17 @@ interface ContactFormState {
   lastName: string;
   email: string;
   phone: string;
+  alternatePhone: string;
+  address: string;
   province: string;
   city: string;
+  postalCode: string;
+  leadSource: string;
+  nextFollowUpAt: string;
   preferredContactMethod: string;
 }
 
-const emptyContactForm: ContactFormState = { firstName: '', lastName: '', email: '', phone: '', province: '', city: '', preferredContactMethod: 'EITHER' };
+const emptyContactForm: ContactFormState = { firstName: '', lastName: '', email: '', phone: '', alternatePhone: '', address: '', province: '', city: '', postalCode: '', leadSource: 'DIRECT', nextFollowUpAt: '', preferredContactMethod: 'EITHER' };
 
 function ContactFormDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; onCreated: () => void }) {
   const [form, setForm] = useState<ContactFormState>(emptyContactForm);
@@ -559,7 +677,7 @@ function ContactFormDialog({ open, onOpenChange, onCreated }: { open: boolean; o
     event.preventDefault();
     setSaving(true);
     try {
-      await crmRequest('contacts', { method: 'POST', body: JSON.stringify(form) });
+      await crmRequest('contacts', { method: 'POST', body: JSON.stringify({ ...form, nextFollowUpAt: form.nextFollowUpAt ? new Date(form.nextFollowUpAt).toISOString() : null }) });
       toast({ title: 'Contact added', description: `${form.firstName} ${form.lastName} is now in the CRM.` });
       setForm(emptyContactForm);
       onOpenChange(false);
@@ -573,7 +691,7 @@ function ContactFormDialog({ open, onOpenChange, onCreated }: { open: boolean; o
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <form onSubmit={submit}>
           <DialogHeader><DialogTitle>Add a contact</DialogTitle><DialogDescription>Create a client or prospect contact record.</DialogDescription></DialogHeader>
           <div className="grid gap-4 py-5 sm:grid-cols-2">
@@ -581,8 +699,13 @@ function ContactFormDialog({ open, onOpenChange, onCreated }: { open: boolean; o
             <div className="space-y-2"><Label htmlFor="contact-last-name">Last name</Label><Input id="contact-last-name" required value={form.lastName} onChange={(event) => setForm({ ...form, lastName: event.target.value })} /></div>
             <div className="space-y-2"><Label htmlFor="contact-email">Email</Label><Input id="contact-email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div>
             <div className="space-y-2"><Label htmlFor="contact-phone">Phone</Label><Input id="contact-phone" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="contact-alt-phone">Alternate phone</Label><Input id="contact-alt-phone" value={form.alternatePhone} onChange={(event) => setForm({ ...form, alternatePhone: event.target.value })} /></div>
+            <div className="space-y-2 sm:col-span-2"><Label htmlFor="contact-address">Address</Label><Input id="contact-address" value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} /></div>
             <div className="space-y-2"><Label htmlFor="contact-city">City</Label><Input id="contact-city" value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></div>
             <div className="space-y-2"><Label htmlFor="contact-province">Province</Label><Input id="contact-province" value={form.province} onChange={(event) => setForm({ ...form, province: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="contact-postal">Postal code</Label><Input id="contact-postal" value={form.postalCode} onChange={(event) => setForm({ ...form, postalCode: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="contact-source">Lead source</Label><select id="contact-source" className={selectClassName} value={form.leadSource} onChange={(event) => setForm({ ...form, leadSource: event.target.value })}>{leadSources.map((value) => <option key={value} value={value}>{formatLabel(value)}</option>)}</select></div>
+            <div className="space-y-2"><Label htmlFor="contact-follow-up">Next follow-up</Label><Input id="contact-follow-up" type="datetime-local" value={form.nextFollowUpAt} onChange={(event) => setForm({ ...form, nextFollowUpAt: event.target.value })} /></div>
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="contact-method">Preferred contact method</Label><select id="contact-method" className={selectClassName} value={form.preferredContactMethod} onChange={(event) => setForm({ ...form, preferredContactMethod: event.target.value })}><option value="EITHER">Phone or email</option><option value="PHONE">Phone</option><option value="EMAIL">Email</option><option value="TEXT">Text message</option></select></div>
           </div>
           <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Add contact</Button></DialogFooter>
@@ -597,6 +720,7 @@ function ContactsPage({ createOpen = false }: { createOpen?: boolean }) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(createOpen);
+  const [lifecycle, setLifecycle] = useState<{ contact: Contact; mode: 'archive' | 'restore' } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -604,8 +728,11 @@ function ContactsPage({ createOpen = false }: { createOpen?: boolean }) {
     setLoading(true);
     setError('');
     try {
-      const response = await crmRequest<{ contacts: Contact[] }>('contacts', { params: { limit: 500 } });
-      setContacts(response.contacts || []);
+      const [active, archived] = await Promise.all([
+        crmRequest<{ contacts: Contact[] }>('contacts', { params: { limit: 500 } }),
+        crmRequest<{ contacts: Contact[] }>('contacts', { params: { limit: 500, archived: 'true' } }),
+      ]);
+      setContacts([...(active.contacts || []), ...(archived.contacts || [])]);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unknown error');
     } finally {
@@ -622,14 +749,16 @@ function ContactsPage({ createOpen = false }: { createOpen?: boolean }) {
     return contacts.filter((contact) => `${contactName(contact)} ${contact.email || ''} ${contact.phone || ''} ${contact.city || ''} ${contact.province || ''}`.toLowerCase().includes(query));
   }, [contacts, search]);
 
-  const remove = async (contact: Contact) => {
-    if (!window.confirm(`Delete ${contactName(contact)}'s contact record? Associated leads will remain but become unassigned.`)) return;
+  const lifecycleAction = async (reason: string) => {
+    if (!lifecycle) return;
     try {
-      await crmRequest('contacts', { method: 'DELETE', params: { id: contact.id } });
-      setContacts((current) => current.filter((item) => item.id !== contact.id));
-      toast({ title: 'Contact deleted' });
+      if (lifecycle.mode === 'archive') await crmRequest('contacts', { method: 'DELETE', params: { id: lifecycle.contact.id }, body: JSON.stringify({ reason }) });
+      else await crmRequest('contacts', { method: 'PATCH', params: { id: lifecycle.contact.id }, body: JSON.stringify({ action: 'RESTORE', reason }) });
+      toast({ title: lifecycle.mode === 'archive' ? 'Client record archived' : 'Client record restored' });
+      await load();
     } catch (requestError) {
-      toast({ title: 'Could not delete contact', description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+      toast({ title: `Could not ${lifecycle.mode} client record`, description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+      throw requestError;
     }
   };
 
@@ -643,7 +772,7 @@ function ContactsPage({ createOpen = false }: { createOpen?: boolean }) {
 
   return (
     <>
-      <PageHeader title="Contacts" description={`${contacts.length} client and prospect records.`} action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Add contact</Button>} />
+      <PageHeader title="Clients" description={`${contacts.filter((contact) => !contact.archived_at).length} active client/prospect records and ${contacts.filter((contact) => contact.archived_at).length} archived records.`} action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Add client</Button>} />
       <Card>
         <CardHeader><div className="relative max-w-xl"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input className="pl-9" placeholder="Search name, email, phone, or location" value={search} onChange={(event) => setSearch(event.target.value)} /></div></CardHeader>
         <CardContent>
@@ -653,12 +782,12 @@ function ContactsPage({ createOpen = false }: { createOpen?: boolean }) {
               <TableBody>
                 {filteredContacts.map((contact) => (
                   <TableRow key={contact.id} className="cursor-pointer" onClick={() => navigate(`/management/contacts/${contact.id}`)}>
-                    <TableCell className="font-medium">{contactName(contact)}</TableCell>
+                    <TableCell className="font-medium">{contactName(contact)}{contact.archived_at && <Badge variant="outline" className="ml-2">Archived</Badge>}</TableCell>
                     <TableCell>{contact.email || '—'}</TableCell>
                     <TableCell>{contact.phone || '—'}</TableCell>
                     <TableCell>{[contact.city, contact.province].filter(Boolean).join(', ') || '—'}</TableCell>
                     <TableCell>{formatDate(contact.created_at)}</TableCell>
-                    <TableCell onClick={(event) => event.stopPropagation()}><Button aria-label={`Delete ${contactName(contact)}`} variant="ghost" size="icon" onClick={() => void remove(contact)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell>
+                    <TableCell onClick={(event) => event.stopPropagation()}><Button aria-label={`${contact.archived_at ? 'Restore' : 'Archive'} ${contactName(contact)}`} variant="ghost" size="icon" onClick={() => setLifecycle({ contact, mode: contact.archived_at ? 'restore' : 'archive' })}>{contact.archived_at ? <RotateCcw className="h-4 w-4 text-emerald-600" /> : <Archive className="h-4 w-4 text-slate-500" />}</Button></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -667,13 +796,16 @@ function ContactsPage({ createOpen = false }: { createOpen?: boolean }) {
         </CardContent>
       </Card>
       <ContactFormDialog open={open} onOpenChange={closeDialog} onCreated={load} />
+      {lifecycle && <LifecycleDialog open onOpenChange={(nextOpen) => { if (!nextOpen) setLifecycle(null); }} mode={lifecycle.mode} recordLabel={contactName(lifecycle.contact)} onConfirm={lifecycleAction} />}
     </>
   );
 }
 
 function ContactDetailPage() {
   const { contactId = '' } = useParams();
+  const navigate = useNavigate();
   const [contact, setContact] = useState<Contact | null>(null);
+  const [lifecycleOpen, setLifecycleOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -692,20 +824,35 @@ function ContactDetailPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  const lifecycleAction = async (reason: string) => {
+    if (!contact) return;
+    if (contact.archived_at) {
+      await crmRequest('contacts', { method: 'PATCH', params: { id: contact.id }, body: JSON.stringify({ action: 'RESTORE', reason }) });
+      await load();
+    } else {
+      await crmRequest('contacts', { method: 'DELETE', params: { id: contact.id }, body: JSON.stringify({ reason }) });
+      navigate('/management/contacts');
+    }
+  };
+
   if (loading) return <LoadingPanel label="Loading contact..." />;
   if (error || !contact) return <ErrorPanel message={error || 'Contact not found'} retry={load} />;
 
   return (
     <>
       <div className="mb-5"><Button variant="ghost" asChild><Link to="/management/contacts"><ArrowLeft className="mr-2 h-4 w-4" />Back to contacts</Link></Button></div>
-      <PageHeader title={contactName(contact)} description="Client and prospect contact record" />
+      <PageHeader title={contactName(contact)} description="Client and prospect contact record" action={<Button variant="outline" onClick={() => setLifecycleOpen(true)}>{contact.archived_at ? <RotateCcw className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{contact.archived_at ? 'Restore client' : 'Archive client'}</Button>} />
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader><CardTitle>Contact details</CardTitle></CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-start gap-3"><Mail className="mt-0.5 h-4 w-4 text-slate-400" /><div><p className="text-slate-500">Email</p>{contact.email ? <a className="font-medium text-primary underline" href={`mailto:${contact.email}`}>{contact.email}</a> : <p>Not provided</p>}</div></div>
             <div className="flex items-start gap-3"><Phone className="mt-0.5 h-4 w-4 text-slate-400" /><div><p className="text-slate-500">Phone</p>{contact.phone ? <a className="font-medium text-primary underline" href={`tel:${contact.phone}`}>{contact.phone}</a> : <p>Not provided</p>}</div></div>
-            <div><p className="text-slate-500">Location</p><p>{[contact.city, contact.province].filter(Boolean).join(', ') || 'Not provided'}</p></div>
+            <div><p className="text-slate-500">Alternate phone</p><p>{contact.alternate_phone || 'Not provided'}</p></div>
+            <div><p className="text-slate-500">Address</p><p>{[contact.address, contact.city, contact.province, contact.postal_code].filter(Boolean).join(', ') || 'Not provided'}</p></div>
+            <div><p className="text-slate-500">Lead source</p><p>{formatLabel(contact.lead_source)}</p></div>
+            <div><p className="text-slate-500">Last contact</p><p>{formatDate(contact.last_contact_at)}</p></div>
+            <div><p className="text-slate-500">Next follow-up</p><p>{formatDate(contact.next_follow_up_at)}</p></div>
             <div><p className="text-slate-500">Preferred method</p><p>{formatLabel(contact.preferred_contact_method)}</p></div>
             <div><p className="text-slate-500">Marketing consent</p><p>{contact.marketing_consent ? 'Granted' : 'Not granted'}</p></div>
           </CardContent>
@@ -717,13 +864,15 @@ function ContactDetailPage() {
           </CardContent>
         </Card>
       </div>
+      <LifecycleDialog open={lifecycleOpen} onOpenChange={setLifecycleOpen} mode={contact.archived_at ? 'restore' : 'archive'} recordLabel={contactName(contact)} onConfirm={lifecycleAction} />
     </>
   );
 }
 
-const pipelineStages = leadStatuses;
+const pipelineStages = leadStatuses.filter((stage) => stage !== 'ARCHIVED');
 
 function PipelinePage() {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -744,6 +893,11 @@ function PipelinePage() {
   useEffect(() => { void load(); }, [load]);
 
   const move = async (lead: Lead, leadStatus: string) => {
+    if (leadOutcomeStatuses.includes(leadStatus as typeof leadOutcomeStatuses[number])) {
+      toast({ title: 'Additional outcome details required', description: 'Complete reason, follow-up, advisor, consent, and notes on the lead record.' });
+      navigate(`/management/leads/${lead.id}`);
+      return;
+    }
     setLeads((current) => current.map((item) => item.id === lead.id ? { ...item, lead_status: leadStatus } : item));
     try {
       await crmRequest('leads', { method: 'PATCH', params: { id: lead.id }, body: JSON.stringify({ leadStatus }) });
@@ -930,46 +1084,24 @@ function OperationsPage({ resource, createOpen = false }: { resource: Operations
   );
 }
 
-function ReportsPage() {
-  const [data, setData] = useState<DashboardResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try { setData(await crmRequest<DashboardResponse>('dashboard')); }
-    catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unknown error'); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
-  if (loading) return <LoadingPanel label="Preparing reports..." />;
-  if (error || !data) return <ErrorPanel message={error || 'No report data returned'} retry={load} />;
-
-  return (
-    <>
-      <PageHeader title="Reports" description="Live acquisition and pipeline performance from Supabase." />
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total leads" value={data.stats.totalLeads} description="All recorded opportunities" icon={Activity} color="bg-blue-600" />
-        <StatCard title="Issued or delivered" value={data.stats.completedLeads} description="Successful pipeline outcomes" icon={ShieldCheck} color="bg-emerald-600" />
-        <StatCard title="Conversion rate" value={`${data.stats.conversionRate}%`} description="Lead to issued/delivered policy" icon={BarChart3} color="bg-violet-600" />
-      </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card><CardHeader><CardTitle>Leads by source</CardTitle><CardDescription>Channels contributing to organic and campaign growth</CardDescription></CardHeader><CardContent className="space-y-3">{Object.entries(data.stats.leadsBySource).sort(([, a], [, b]) => b - a).map(([source, count]) => <div key={source} className="flex items-center justify-between rounded-lg border p-3"><span>{formatLabel(source)}</span><Badge>{count}</Badge></div>)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Leads by stage</CardTitle><CardDescription>Current distribution across the funnel</CardDescription></CardHeader><CardContent className="space-y-3">{Object.entries(data.stats.pipelineStatus).sort(([, a], [, b]) => b - a).map(([status, count]) => <div key={status} className="flex items-center justify-between rounded-lg border p-3"><StatusBadge status={status} /><span className="font-semibold">{count}</span></div>)}</CardContent></Card>
-      </div>
-    </>
-  );
-}
-
 interface IntegrationsResponse {
   integrations: Record<string, boolean>;
   user: { role: string; environmentManagedPassword: boolean };
 }
 
+interface MfaStatusResponse {
+  currentLevel: string | null;
+  nextLevel: string | null;
+  totpEnrolled: boolean;
+  factors: Array<{ id: string; friendlyName: string; status: string; createdAt: string }>;
+  passkeyAvailable: boolean;
+  passkeyStatus: string;
+}
+
 function SettingsPage({ user }: { user: ManagementUser }) {
   const [data, setData] = useState<IntegrationsResponse | null>(null);
+  const [mfa, setMfa] = useState<MfaStatusResponse | null>(null);
+  const [defaultBcc, setDefaultBcc] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '' });
@@ -978,7 +1110,17 @@ function SettingsPage({ user }: { user: ManagementUser }) {
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    try { setData(await crmRequest<IntegrationsResponse>('integrations')); }
+    try {
+      const [integrationResponse, settingsResponse, mfaResponse] = await Promise.all([
+        crmRequest<IntegrationsResponse>('integrations'),
+        crmRequest<{ email: { defaultBcc: string[] } }>('management-settings'),
+        fetch('/api/auth/mfa', { credentials: 'include' }),
+      ]);
+      if (!mfaResponse.ok) throw new Error('Unable to verify MFA status');
+      setData(integrationResponse);
+      setDefaultBcc(settingsResponse.email.defaultBcc.join(', '));
+      setMfa(await mfaResponse.json());
+    }
     catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unknown error'); }
     finally { setLoading(false); }
   }, []);
@@ -996,6 +1138,20 @@ function SettingsPage({ user }: { user: ManagementUser }) {
       toast({ title: 'Password updated' });
     } catch (requestError) {
       toast({ title: 'Could not update password', description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveDefaultBcc = async (event: FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const response = await crmRequest<{ email: { defaultBcc: string[] } }>('management-settings', { method: 'PATCH', body: JSON.stringify({ defaultBcc }) });
+      setDefaultBcc(response.email.defaultBcc.join(', '));
+      toast({ title: 'Default BCC updated', description: 'Client, advisor, compliance, commission, and report composers now use this central setting.' });
+    } catch (requestError) {
+      toast({ title: 'Could not update default BCC', description: requestError instanceof Error ? requestError.message : 'Unknown error', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -1026,13 +1182,21 @@ function SettingsPage({ user }: { user: ManagementUser }) {
             )}
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader><CardTitle>Authenticator security</CardTitle><CardDescription>Supabase first factor plus TOTP assurance level</CardDescription></CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <div className="flex items-center justify-between rounded-lg border p-3"><span>Current session</span><Badge className={mfa?.currentLevel === 'aal2' ? 'bg-emerald-600' : 'bg-amber-600'}>{(mfa?.currentLevel || 'unknown').toUpperCase()}</Badge></div>
+            <div className="flex items-center justify-between rounded-lg border p-3"><span>TOTP authenticator</span>{mfa?.totpEnrolled ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <XCircle className="h-5 w-5 text-red-500" />}</div>
+            {mfa?.factors.map((factor) => <div key={factor.id} className="rounded-lg border bg-slate-50 p-3"><p className="font-medium">{factor.friendlyName}</p><p className="text-xs text-slate-500">{formatLabel(factor.status)} · enrolled {formatDate(factor.createdAt)}</p></div>)}
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 text-cyan-900"><p className="font-medium">Passkey audit</p><p className="mt-1 text-xs">{mfa?.passkeyStatus || 'Passkey status unavailable.'} Browser biometric/password-manager prompts are not Estate Nest MFA.</p></div>
+            <p className="text-xs text-slate-500">Lost-device recovery requires owner identity verification and protected factor removal in Supabase. It never bypasses MFA.</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Central email controls</CardTitle><CardDescription>One visible default BCC for every management email module</CardDescription></CardHeader>
+          <CardContent><form className="space-y-4" onSubmit={saveDefaultBcc}><div className="space-y-2"><Label htmlFor="default-bcc">Default BCC addresses</Label><Input id="default-bcc" value={defaultBcc} onChange={(event) => setDefaultBcc(event.target.value)} placeholder="kanwar@estatenest.ca" /><p className="text-xs text-slate-500">Separate multiple approved addresses with commas. This is configuration, not a secret.</p></div><Button type="submit" disabled={saving}>Save email setting</Button></form></CardContent>
+        </Card>
       </div>
-      <Card className="mt-6">
-        <CardHeader><CardTitle>Next management modules</CardTitle><CardDescription>Architecture-ready roadmap for the next controlled release</CardDescription></CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {['Advisor recruitment and onboarding', 'Licence and E&O compliance', 'Carrier codes and sponsorships', 'Commission reconciliation'].map((item) => <div key={item} className="rounded-lg border bg-slate-50 p-4 text-sm font-medium text-slate-700">{item}</div>)}
-        </CardContent>
-      </Card>
     </>
   );
 }
@@ -1051,8 +1215,10 @@ function ManagementNotFound() {
 }
 
 function ManagementRoutes({ user }: { user: ManagementUser }) {
+  const hasPrivilegedOperationsAccess = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user.role.toUpperCase());
+  const privilegedElement = (element: React.ReactNode) => hasPrivilegedOperationsAccess ? element : <Navigate to="/management/access-denied" replace />;
   return (
-    <Routes>
+    <><OperationsAccessNotice role={user.role} /><Routes>
       <Route index element={<Navigate to="dashboard" replace />} />
       <Route path="dashboard" element={<DashboardHome user={user} />} />
       <Route path="leads" element={<LeadsPage />} />
@@ -1062,14 +1228,20 @@ function ManagementRoutes({ user }: { user: ManagementUser }) {
       <Route path="contacts/new" element={<ContactsPage createOpen />} />
       <Route path="contacts/:contactId" element={<ContactDetailPage />} />
       <Route path="pipeline" element={<PipelinePage />} />
+      <Route path="advisors" element={<AdvisorsPage />} />
+      <Route path="advisors/:advisorId" element={<AdvisorDetailPage />} />
+      <Route path="compliance" element={privilegedElement(<CompliancePage />)} />
+      <Route path="commissions" element={privilegedElement(<CommissionsPage />)} />
+      <Route path="email" element={<CommunicationsPage />} />
+      <Route path="notifications" element={<NotificationsPage />} />
       <Route path="appointments" element={<OperationsPage resource="appointments" />} />
       <Route path="appointments/new" element={<OperationsPage resource="appointments" createOpen />} />
       <Route path="tasks" element={<OperationsPage resource="tasks" />} />
       <Route path="content" element={<OperationsPage resource="content" />} />
-      <Route path="reports" element={<ReportsPage />} />
+      <Route path="reports" element={privilegedElement(<ReportsOperationsPage />)} />
       <Route path="settings" element={<SettingsPage user={user} />} />
       <Route path="*" element={<ManagementNotFound />} />
-    </Routes>
+    </Routes></>
   );
 }
 
@@ -1142,6 +1314,7 @@ const Dashboard = () => {
           <Button size="sm" asChild><Link to="/management/leads/new"><Plus className="mr-2 h-4 w-4" />Add lead</Link></Button>
           <Button size="sm" variant="outline" asChild><Link to="/management/contacts/new"><Plus className="mr-2 h-4 w-4" />Add contact</Link></Button>
           <Button size="sm" variant="outline" asChild><Link to="/management/appointments/new"><CalendarDays className="mr-2 h-4 w-4" />Schedule</Link></Button>
+          <Button size="sm" variant="outline" asChild><Link to="/management/advisors"><UserPlus className="mr-2 h-4 w-4" />Add advisor</Link></Button>
         </div>
       </div>
 

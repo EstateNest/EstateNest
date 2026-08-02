@@ -74,12 +74,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({ message: 'Management access is not authorized.' });
   }
 
-  if (result.status !== 'authorized' || !result.user || !result.session) {
+  if (!result.user || !result.session) {
     return res.status(503).json({ message: 'Management authentication is temporarily unavailable.' });
   }
 
   setAuthSessionCookies(res, result.session);
   await recordLoginAttempt(email, ipAddress, true);
+
+  if (result.status === 'mfa_required' || result.status === 'mfa_enrollment_required') {
+    return res.status(202).json({
+      success: false,
+      mfaRequired: result.status === 'mfa_required',
+      mfaEnrollmentRequired: result.status === 'mfa_enrollment_required',
+    });
+  }
+
+  if (result.status !== 'authorized') {
+    return res.status(503).json({ message: 'Management authentication is temporarily unavailable.' });
+  }
 
   return res.status(200).json({ success: true, user: result.user });
 }

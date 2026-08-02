@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createSupabaseAuthClient, getManagementAuth, setAuthSessionCookies } from '../_lib/management-auth.js';
+import { createSupabaseAuthClient, getManagementMfaContext, setAuthSessionCookies } from '../_lib/management-auth.js';
 import { isTrustedOrigin } from '../_lib/session.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -13,10 +13,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({ error: 'Invalid request origin' });
   }
 
-  const auth = await getManagementAuth(req, res);
+  const context = await getManagementMfaContext(req, res);
+  if (!context) return res.status(401).json({ message: 'Unable to verify the management account.' });
 
-  if (auth.status !== 'authorized' || !auth.user) {
-    return res.status(auth.status === 'unauthorized' ? 403 : 401).json({ message: 'Unable to verify the management account.' });
+  const assurance = await context.client.auth.mfa.getAuthenticatorAssuranceLevel(context.session.access_token);
+  if (assurance.error || assurance.data.currentLevel !== 'aal2') {
+    return res.status(403).json({ message: 'Verify your authenticator before changing the password.' });
   }
 
   const { currentPassword, newPassword } = req.body || {};
@@ -34,9 +36,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const authClient = createSupabaseAuthClient();
-    const verified = await authClient.auth.signInWithPassword({
-      email: auth.user.email,
+    const verificationClient = createSupabaseAuthClient();
+    const verified = await verificationClient.auth.signInWithPassword({
+      email: context.user.email,
       password: currentPassword,
     });
 
@@ -44,13 +46,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ message: 'The current password is incorrect.' });
     }
 
-    const updated = await authClient.auth.updateUser({ password: newPassword });
+    const updated = await context.client.auth.updateUser({ password: newPassword });
 
     if (updated.error) {
       return res.status(400).json({ message: 'Password update failed. Verify the password requirements and try again.' });
     }
 
-    setAuthSessionCookies(res, verified.data.session);
+    const refreshed = await context.client.auth.getSession();
+    if (refreshed.data.session) setAuthSessionCookies(res, refreshed.data.session);
     return res.status(200).json({ success: true });
   } catch {
     return res.status(500).json({ message: 'Password update failed. Please try again.' });

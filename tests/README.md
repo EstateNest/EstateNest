@@ -5,6 +5,7 @@
 This directory contains Playwright tests for EstateNest:
 - **Public Website Tests** - `public-website.spec.ts`
 - **CRM Tests** - `crm.spec.ts`
+- **Lead and Advisor Management Tests** - `lead-advisor-management.spec.ts`
 
 ## Prerequisites
 
@@ -31,6 +32,11 @@ npx playwright test public-website.spec.ts
 ### CRM Tests Only
 ```bash
 npx playwright test crm.spec.ts
+```
+
+### Lead and Advisor Operations Only
+```bash
+npx playwright test lead-advisor-management.spec.ts
 ```
 
 ### Single Test
@@ -77,6 +83,12 @@ API_URL=http://localhost:3001
 - [x] Dashboard loads (after login)
 - [x] Navigation menu
 - [x] Lead API integration
+- [x] TOTP challenge and enrolment fallback
+- [x] Lead outcome governance and archive/restore
+- [x] Advisor recruitment, compliance masking, and privilege checks
+- [x] Insurance-company contracts with masked advisor codes
+- [x] Gmail preview/confirmation, attachment restrictions, and retry
+- [x] Report preview token before export, delivery, or scheduling
 
 ### API ✓
 - [x] Lead creation via webhook

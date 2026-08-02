@@ -26,11 +26,25 @@ const lead = {
   contact,
   source: 'ORGANIC_SEARCH',
   insurance_interest: 'TERM_LIFE',
-  lead_status: 'NEW',
+  lead_status: 'PROSPECT',
   lead_score: 70,
   notes: 'Mock lead for route verification',
   next_follow_up_at: '2026-08-02T18:00:00.000Z',
   created_at: '2026-08-01T12:00:00.000Z',
+};
+
+const advisor = {
+  id: 'advisor-1',
+  first_name: 'Jordan',
+  last_name: 'Singh',
+  email: 'jordan@example.test',
+  phone: '780-555-0110',
+  province: 'AB',
+  new_mga: 'Verified MGA',
+  recruitment_stage: 'ONBOARDING',
+  next_follow_up_at: '2026-08-10T18:00:00.000Z',
+  created_at: '2026-08-01T12:00:00.000Z',
+  compliance: [{ id: 'compliance-1', advisor_id: 'advisor-1', life_licence_number: '••••1234', eo_policy_number: '••••5678', compliance_status: 'REVIEW_REQUIRED' }],
 };
 
 async function mockAuthenticatedManagement(page: Page) {
@@ -39,6 +53,9 @@ async function mockAuthenticatedManagement(page: Page) {
   });
   await page.route('**/api/auth/logout', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+  });
+  await page.route('**/api/auth/mfa', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, currentLevel: 'aal2', nextLevel: 'aal2', totpEnrolled: true, factors: [{ id: 'factor-1', friendlyName: 'Estate Nest Management', status: 'verified', createdAt: '2026-08-01T12:00:00.000Z' }], passkeyAvailable: false, passkeyStatus: 'Passkeys require a separate experimental Supabase configuration review.' }) });
   });
   await page.route('**/api/crm?*', async (route) => {
     const request = route.request();
@@ -57,18 +74,36 @@ async function mockAuthenticatedManagement(page: Page) {
           totalLeads: 1,
           completedLeads: 0,
           conversionRate: 0,
-          pipelineStatus: { NEW: 1 },
+          pipelineStatus: { PROSPECT: 1 },
           leadsBySource: { ORGANIC_SEARCH: 1 },
         },
         recentLeads: [lead],
         followUpLeads: [lead],
       };
     } else if (resource === 'leads') {
-      payload = url.searchParams.get('id') ? { success: true, lead } : { success: true, leads: [lead], total: 1 };
+      payload = url.searchParams.get('id') ? { success: true, lead } : { success: true, leads: url.searchParams.get('archived') === 'true' ? [] : [lead], total: 1 };
     } else if (resource === 'contacts') {
       payload = url.searchParams.get('id')
         ? { success: true, contact: { ...contact, leads: [lead] } }
-        : { success: true, contacts: [contact], total: 1 };
+        : { success: true, contacts: url.searchParams.get('archived') === 'true' ? [] : [contact], total: 1 };
+    } else if (resource === 'advisors') {
+      payload = url.searchParams.get('id') ? { success: true, advisor } : { success: true, advisors: url.searchParams.get('archived') === 'true' ? [] : [advisor], total: 1 };
+    } else if (resource === 'compliance') {
+      payload = { success: true, compliance: advisor.compliance.map((entry) => ({ ...entry, advisor })) };
+    } else if (resource === 'commissions') {
+      payload = { success: true, commissions: [] };
+    } else if (resource === 'carriers') {
+      payload = { success: true, carriers: [] };
+    } else if (resource === 'reminder-rules') {
+      payload = { success: true, rules: [] };
+    } else if (resource === 'notifications') {
+      payload = { success: true, notifications: [] };
+    } else if (resource === 'emails') {
+      payload = { success: true, messages: [], defaultBcc: ['kanwar@estatenest.ca'] };
+    } else if (resource === 'management-settings') {
+      payload = { success: true, email: { defaultBcc: ['kanwar@estatenest.ca'] } };
+    } else if (resource === 'reports') {
+      payload = { success: true, definitions: [], runs: [] };
     } else if (['tasks', 'appointments', 'content'].includes(resource || '')) {
       payload = { success: true, items: [] };
     } else if (resource === 'integrations') {
@@ -102,7 +137,6 @@ test.describe('Estate Nest management routing', () => {
     await expect(page.getByRole('link', { name: 'Estate Nest Home', exact: true })).toHaveAttribute('href', '/');
     await expect(page.getByText('Default Login Credentials')).toHaveCount(0);
   });
-
   test('login home return is keyboard accessible and reaches the public website', async ({ page }) => {
     await page.route('**/api/auth/me', async (route) => {
       await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Not authenticated' }) });
@@ -169,6 +203,58 @@ test.describe('Estate Nest management routing', () => {
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 
+  test('password first factor requires TOTP before portal access', async ({ page }) => {
+    let firstFactorAccepted = false;
+    let secondFactorAccepted = false;
+    await page.route('**/api/auth/me', async (route) => {
+      const payload = secondFactorAccepted
+        ? { success: true, user: managementUser }
+        : firstFactorAccepted
+          ? { error: 'Additional authentication is required', code: 'MFA_REQUIRED' }
+          : { error: 'Not authenticated' };
+      await route.fulfill({ status: secondFactorAccepted ? 200 : 401, contentType: 'application/json', body: JSON.stringify(payload) });
+    });
+    await page.route('**/api/auth/login', async (route) => {
+      firstFactorAccepted = true;
+      await route.fulfill({ status: 202, contentType: 'application/json', body: JSON.stringify({ success: false, mfaRequired: true }) });
+    });
+    await page.route('**/api/auth/mfa', async (route) => {
+      const body = route.request().postDataJSON() as { action: string; code: string };
+      expect(body.action).toBe('verify');
+      expect(body.code).toBe('123456');
+      secondFactorAccepted = true;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+    });
+    await page.route('**/api/crm?*', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, stats: { newLeads: 0, needsFollowUp: 0, todaysAppointments: 0, totalContacts: 0, totalLeads: 0, completedLeads: 0, conversionRate: 0, pipelineStatus: {}, leadsBySource: {} }, recentLeads: [], followUpLeads: [] }) });
+    });
+
+    await page.goto('/management/login');
+    await page.getByLabel('Email').fill('owner@example.test');
+    await page.getByLabel('Password').fill('correct-test-password');
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Verify Authenticator' })).toBeVisible();
+    await expect(page).toHaveURL(/\/management\/login$/);
+    await page.getByLabel('Six-digit authenticator code').fill('123456');
+    await page.getByRole('button', { name: 'Verify and Continue' }).click();
+    await expect(page).toHaveURL(/\/management\/dashboard$/);
+  });
+
+  test('TOTP enrollment provides a mobile-safe manual fallback', async ({ page }) => {
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Additional authentication is required', code: 'MFA_ENROLLMENT_REQUIRED' }) });
+    });
+    await page.route('**/api/auth/mfa', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, factorId: 'factor-new', qrCode: '<svg xmlns="http://www.w3.org/2000/svg"></svg>', secret: 'ESTATENESTMANUALSECRET' }) });
+    });
+    await page.goto('/management/login');
+    await expect(page.getByRole('heading', { name: 'Secure Your Account' })).toBeVisible();
+    await expect(page.getByText('TOTP works with Google Authenticator')).toBeVisible();
+    await page.getByRole('button', { name: 'Set Up Authenticator' }).click();
+    await expect(page.getByTestId('totp-manual-secret')).toHaveText('ESTATENESTMANUALSECRET');
+    await expect(page.getByLabel('Six-digit authenticator code')).toBeVisible();
+  });
+
   for (const scenario of [
     { name: 'invalid password', email: 'owner@example.test' },
     { name: 'unknown email', email: 'unknown@example.test' },
@@ -223,8 +309,13 @@ test.describe('Estate Nest management routing', () => {
 
     const tabs = [
       ['Leads', '/management/leads'],
-      ['Contacts', '/management/contacts'],
+      ['Clients', '/management/contacts'],
       ['Pipeline', '/management/pipeline'],
+      ['Advisors', '/management/advisors'],
+      ['Compliance', '/management/compliance'],
+      ['Commissions', '/management/commissions'],
+      ['Email', '/management/email'],
+      ['Notifications', '/management/notifications'],
       ['Appointments', '/management/appointments'],
       ['Tasks', '/management/tasks'],
       ['Content', '/management/content'],
@@ -245,7 +336,7 @@ test.describe('Estate Nest management routing', () => {
     await mockAuthenticatedManagement(page);
     await page.goto('/management/dashboard');
     await page.getByRole('navigation', { name: 'Management navigation' }).getByRole('link', { name: 'Leads', exact: true }).click();
-    await page.getByRole('navigation', { name: 'Management navigation' }).getByRole('link', { name: 'Contacts', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Management navigation' }).getByRole('link', { name: 'Clients', exact: true }).click();
 
     await page.goBack();
     await expect(page).toHaveURL(/\/management\/leads$/);
@@ -346,10 +437,10 @@ test.describe('Supabase management authentication preview', () => {
     await page.getByLabel('Password').fill(managementPassword!);
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(page).toHaveURL(/\/management\/dashboard$/);
-    await page.getByRole('navigation', { name: 'Management navigation' }).getByRole('link', { name: 'Contacts', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Management navigation' }).getByRole('link', { name: 'Clients', exact: true }).click();
     await expect(page).toHaveURL(/\/management\/contacts$/);
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Contacts', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Clients', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Logout', exact: true }).click();
     await expect(page).toHaveURL(/\/management\/login$/);
     await expect(page.getByRole('link', { name: 'Estate Nest Home', exact: true })).toBeVisible();

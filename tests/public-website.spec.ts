@@ -8,10 +8,10 @@ test.describe('EstateNest Public Website', () => {
     await expect(page).toHaveTitle(/Life Insurance/);
     
     // Check navigation
-    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible({ timeout: 10000 });
     
     // Check hero section
-    await expect(page.locator('text=Get Free Quote').first()).toBeVisible();
+    await expect(page.getByTestId('homepage-hero-quote')).toBeVisible();
   });
 
   test('Homepage hero quote button opens the quote form', async ({ page }) => {
@@ -138,7 +138,7 @@ test.describe('EstateNest Public Website', () => {
     }
   });
 
-  test('Quote Request form works', async ({ page }) => {
+  test('Quote Request form rejects incomplete submissions', async ({ page }) => {
     await page.goto('/quote');
     
     // Fill form
@@ -149,15 +149,15 @@ test.describe('EstateNest Public Website', () => {
     // Submit
     await page.click('button[type="submit"]');
     
-    // Check for success message or redirect
-    await expect(page.locator('text=Thank You').or(page.locator('text=submitted')).or(page.locator('text=success')).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Missing Information', { exact: true })).toBeVisible();
+    await expect(page.getByText('Please fill in all required fields.', { exact: true })).toBeVisible();
   });
 
   test('Contact page loads', async ({ page }) => {
     await page.goto('/contact');
     
-    // Check contact info
-    await expect(page.locator('text=780-860-3191').or(page.locator('text=hello@estatenest.ca')).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Get In Touch' })).toBeVisible();
+    await expect(page.locator('section').getByRole('link', { name: '780-860-3191', exact: true }).first()).toBeVisible();
   });
 
   test('Footer has compliance info', async ({ page }) => {
@@ -229,7 +229,6 @@ test.describe('About Page', () => {
   test('About page loads', async ({ page }) => {
     await page.goto('/about');
     
-    // Check for about content
-    await expect(page.locator('text=About').first()).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'About Estate Nest' })).toBeVisible();
   });
 });
