@@ -284,7 +284,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           message: 'The secure chatbot handoff expired before submission. Please restart the chat or contact Estate Nest so we can preserve the correct prospect record.',
         });
       }
-      console.error('Quote acceptance transaction failed');
+      console.error('Quote acceptance transaction failed', {
+        code: String(error?.code || 'UNCLASSIFIED').slice(0, 80),
+        message: String(error?.message || '').slice(0, 240),
+      });
       return res.status(503).json({
         success: false,
         message: 'We could not securely accept the quote request. Please try again or contact hello@estatenest.ca.',

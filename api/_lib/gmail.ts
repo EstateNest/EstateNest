@@ -55,7 +55,7 @@ function sanitizedError(error: unknown): Pick<GmailSendResult, 'errorCode' | 'er
 
 export async function sendGmailMessage(message: GmailMessage): Promise<GmailSendResult> {
   const gmailUser = process.env.GMAIL_USER?.trim();
-  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD?.trim();
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, '');
   const to = normalizeEmailAddresses(message.to);
   const cc = normalizeEmailAddresses(message.cc || []);
   const bcc = normalizeEmailAddresses(message.bcc || []);

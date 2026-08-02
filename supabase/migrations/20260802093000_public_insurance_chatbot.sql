@@ -348,8 +348,13 @@ BEGIN
     v_lead_id, v_contact_id, v_session.id, 'CHATBOT', v_session.source_page,
     v_session.referrer, v_session.utm_parameters, v_session.created_at, now()
   )
-  ON CONFLICT (lead_id, chatbot_session_id, source) WHERE chatbot_session_id IS NOT NULL
-  DO UPDATE SET last_interaction_at = now();
+  ON CONFLICT DO NOTHING;
+
+  UPDATE public.lead_source_attributions attribution
+  SET last_interaction_at = now()
+  WHERE attribution.lead_id = v_lead_id
+    AND attribution.chatbot_session_id = v_session.id
+    AND attribution.source = 'CHATBOT';
 
   INSERT INTO public.quote_notifications (
     lead_id, chatbot_session_id, notification_type, channel, recipients, status
@@ -737,8 +742,13 @@ BEGIN
     v_handoff.lead_id, v_contact_id, v_session.id, 'WEBSITE_QUOTE', '/quote',
     NULLIF(LEFT(p_referring_url, 1000), ''), v_session.utm_parameters, now(), now()
   )
-  ON CONFLICT (lead_id, chatbot_session_id, source) WHERE chatbot_session_id IS NOT NULL
-  DO UPDATE SET last_interaction_at = now();
+  ON CONFLICT DO NOTHING;
+
+  UPDATE public.lead_source_attributions attribution
+  SET last_interaction_at = now()
+  WHERE attribution.lead_id = v_handoff.lead_id
+    AND attribution.chatbot_session_id = v_session.id
+    AND attribution.source = 'WEBSITE_QUOTE';
 
   INSERT INTO public.quote_notifications (
     lead_id, chatbot_session_id, submission_key, notification_type, channel, recipients, status
