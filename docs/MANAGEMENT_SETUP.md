@@ -80,7 +80,7 @@ SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 SUPABASE_SECRET_KEY=your-secret-key
 
 # Gmail lead notifications
-GMAIL_USER=hello@estatenest.ca
+GMAIL_USER=kanwar@estatenest.ca
 GMAIL_APP_PASSWORD=configure-as-a-sensitive-vercel-variable
 
 # Management security and protected CRM links

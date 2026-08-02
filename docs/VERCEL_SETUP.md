@@ -15,7 +15,7 @@ Click **Environment Variables** and add each of these:
 | `SUPABASE_URL` | `https://xxxx.supabase.co` | Production; Preview uses staging |
 | `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` | Production; Preview uses staging |
 | `SUPABASE_SECRET_KEY` | `sb_secret_...` | Production; Preview uses a branch-scoped staging secret |
-| `GMAIL_USER` | Gmail sender address | Production and approved Preview testing |
+| `GMAIL_USER` | `kanwar@estatenest.ca` | Verified Gmail SMTP login for approved Preview testing; recipients remain separately configured |
 | `GMAIL_APP_PASSWORD` | Google app password | Production and approved Preview testing (sensitive) |
 | `LEAD_NOTIFICATION_EMAIL_1` | `hello@estatenest.ca` | Production and Preview |
 | `LEAD_NOTIFICATION_EMAIL_2` | `kanwar@estatenest.ca` | Production and Preview |
