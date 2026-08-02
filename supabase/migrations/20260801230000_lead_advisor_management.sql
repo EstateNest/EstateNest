@@ -43,7 +43,7 @@ RETURNS text
 LANGUAGE sql
 VOLATILE
 AS $$
-  SELECT 'ENL-' || TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYYMMDD') || '-' || UPPER(ENCODE(GEN_RANDOM_BYTES(4), 'hex'));
+  SELECT 'ENL-' || TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYYMMDD') || '-' || UPPER(ENCODE(extensions.gen_random_bytes(4), 'hex'));
 $$;
 
 ALTER TABLE public.contacts
@@ -644,7 +644,7 @@ BEGIN
       'smokingHistoryDisclosed', p_smoking_disclosed,
       'medicalHistoryDisclosed', p_medical_disclosed
     ),
-    p_ip_address,
+    NULLIF(TRIM(p_ip_address), '')::inet,
     LEFT(p_user_agent, 1000)
   );
 
@@ -716,6 +716,12 @@ REVOKE ALL ON public.advisors, public.carrier_mga_directory, public.advisor_comp
   public.email_messages, public.email_attachments, public.commission_records,
   public.commission_history, public.compliance_reminder_rules, public.report_definitions,
   public.report_runs, public.management_settings FROM anon, authenticated;
+
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO service_role;
 
 DO $$
 BEGIN
