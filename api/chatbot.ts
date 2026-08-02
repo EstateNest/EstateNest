@@ -155,6 +155,7 @@ async function updateNotificationStatus(
 
 function publicError(res: VercelResponse, error: unknown) {
   const message = error && typeof error === 'object' && 'message' in error ? String(error.message) : '';
+  const code = error && typeof error === 'object' && 'code' in error ? String(error.code).slice(0, 80) : 'UNCLASSIFIED';
   if (message.includes('chatbot_rate_limited')) {
     return res.status(429).json({ success: false, message: 'Please wait before starting another chat or contact Estate Nest directly.' });
   }
@@ -167,7 +168,7 @@ function publicError(res: VercelResponse, error: unknown) {
   if (message.includes('chatbot_session_invalid')) {
     return res.status(409).json({ success: false, message: 'This chat session is no longer available. Please restart the conversation.' });
   }
-  console.error('Chatbot request failed');
+  console.error('Chatbot request failed', { code, message: message.slice(0, 240) });
   return res.status(503).json({ success: false, message: 'The secure chat service is temporarily unavailable. Please call or email Estate Nest.' });
 }
 
